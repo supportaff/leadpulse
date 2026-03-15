@@ -1,3 +1,26 @@
+import { IS_PAYU_LIVE } from '@/lib/payu';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PayU subscription payment links
+// TEST links  → created in PayU test dashboard
+// LIVE links  → created in PayU live dashboard
+// Switch is controlled by NEXT_PUBLIC_PAYU_MODE env var (test | live)
+// ─────────────────────────────────────────────────────────────────────────────
+const PAYU_LINKS = {
+  test: {
+    starter: 'https://v.payu.in/PAYUMN/VIWsBvRYSU9b', // ₹499/month TEST
+    growth:  null,  // TODO: create ₹999  test subscription link
+    pro:     null,  // TODO: create ₹1499 test subscription link
+  },
+  live: {
+    starter: null,  // TODO: create ₹499  live subscription link
+    growth:  null,  // TODO: create ₹999  live subscription link
+    pro:     null,  // TODO: create ₹1499 live subscription link
+  },
+};
+
+const links = IS_PAYU_LIVE ? PAYU_LINKS.live : PAYU_LINKS.test;
+
 // Single source of truth for all plan definitions and limits
 export const PLANS = {
   starter: {
@@ -6,7 +29,7 @@ export const PLANS = {
     price: 499,
     currency: 'INR',
     productinfo: 'LeadPulse Starter Plan – 3 Campaigns, 100 Leads/month',
-    payuLink: 'https://v.payu.in/PAYUMN/VIWsBvRYSU9b', // ₹499/month
+    payuLink: links.starter,
     limits: {
       campaigns: 3,
       leadsPerMonth: 100,
@@ -20,7 +43,7 @@ export const PLANS = {
     price: 999,
     currency: 'INR',
     productinfo: 'LeadPulse Growth Plan – 10 Campaigns, 500 Leads/month',
-    payuLink: null, // TODO: create ₹999 PayU subscription link
+    payuLink: links.growth,
     popular: true,
     limits: {
       campaigns: 10,
@@ -35,7 +58,7 @@ export const PLANS = {
     price: 1499,
     currency: 'INR',
     productinfo: 'LeadPulse Pro Plan – Unlimited Campaigns, 2000 Leads/month',
-    payuLink: null, // TODO: create ₹1499 PayU subscription link
+    payuLink: links.pro,
     limits: {
       campaigns: 999,
       leadsPerMonth: 2000,
