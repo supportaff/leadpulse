@@ -1,23 +1,19 @@
-import Link from 'next/link'
-import { Zap } from 'lucide-react'
+import Link from 'next/link';
 
-export default function Footer() {
+export function Footer() {
   return (
-    <footer className="border-t bg-white py-12">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2 font-bold text-blue-600">
-            <Zap className="h-5 w-5" />
-            LeadPulse
-          </Link>
-          <div className="flex gap-6 text-sm text-gray-500">
-            <Link href="/features" className="hover:text-gray-900">Features</Link>
-            <Link href="/pricing" className="hover:text-gray-900">Pricing</Link>
-            <Link href="/sign-in" className="hover:text-gray-900">Sign In</Link>
-          </div>
-          <p className="text-sm text-gray-400">© 2026 LeadPulse. All rights reserved.</p>
+    <footer className="border-t border-gray-800 py-10 px-6">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <span className="text-white font-bold">LeadPulse</span>
+        <div className="flex items-center gap-6 text-sm text-gray-400">
+          <Link href="/features" className="hover:text-white transition-colors">Features</Link>
+          <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+          <Link href="/sign-in" className="hover:text-white transition-colors">Sign in</Link>
         </div>
+        <p className="text-xs text-gray-600">&copy; {new Date().getFullYear()} LeadPulse. All rights reserved.</p>
       </div>
     </footer>
-  )
+  );
 }
+
+export default Footer;

@@ -1,43 +1,27 @@
-'use client'
-import Link from 'next/link'
-import { SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/nextjs'
-import { Zap } from 'lucide-react'
+'use client';
+import Link from 'next/link';
+import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 
-export default function Navbar() {
-  const { isSignedIn } = useAuth()
+export function Navbar() {
   return (
-    <nav className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-blue-600">
-          <Zap className="h-6 w-6" />
-          LeadPulse
-        </Link>
-        <div className="hidden md:flex items-center gap-8 text-sm text-gray-600">
-          <Link href="/features" className="hover:text-blue-600 transition-colors">Features</Link>
-          <Link href="/pricing" className="hover:text-blue-600 transition-colors">Pricing</Link>
-        </div>
-        <div className="flex items-center gap-3">
-          {isSignedIn ? (
-            <>
-              <Link href="/dashboard" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
-                Dashboard
-              </Link>
-              <UserButton />
-            </>
-          ) : (
-            <>
-              <SignInButton mode="modal">
-                <button className="text-sm text-gray-600 hover:text-blue-600 transition-colors">Sign in</button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
-                  Start Free
-                </button>
-              </SignUpButton>
-            </>
-          )}
+    <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/10 bg-gray-950/80 backdrop-blur-md">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <Link href="/" className="text-xl font-bold text-white">LeadPulse</Link>
+        <div className="flex items-center gap-6">
+          <Link href="/features" className="text-sm text-gray-400 hover:text-white transition-colors">Features</Link>
+          <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors">Pricing</Link>
+          <SignedOut>
+            <Link href="/sign-in" className="text-sm text-gray-400 hover:text-white transition-colors">Sign in</Link>
+            <Link href="/sign-up" className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Get started</Link>
+          </SignedOut>
+          <SignedIn>
+            <Link href="/dashboard" className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Dashboard</Link>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </div>
       </div>
     </nav>
-  )
+  );
 }
+
+export default Navbar;

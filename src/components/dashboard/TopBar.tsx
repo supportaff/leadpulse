@@ -1,16 +1,16 @@
-import { UserButton } from '@clerk/nextjs'
-import { Bell } from 'lucide-react'
+'use client';
+import { UserButton } from '@clerk/nextjs';
+import { Bell } from 'lucide-react';
 
-export default function TopBar() {
+export function TopBar() {
   return (
-    <header className="flex items-center justify-between border-b bg-white px-6 py-4">
-      <div />
-      <div className="flex items-center gap-4">
-        <button className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100">
-          <Bell className="h-5 w-5" />
-        </button>
-        <UserButton afterSignOutUrl="/" />
-      </div>
+    <header className="h-14 border-b border-gray-800 bg-gray-900 flex items-center justify-end px-6 gap-4">
+      <button className="text-gray-400 hover:text-white transition-colors">
+        <Bell className="w-5 h-5" />
+      </button>
+      <UserButton afterSignOutUrl="/" />
     </header>
-  )
+  );
 }
+
+export default TopBar;

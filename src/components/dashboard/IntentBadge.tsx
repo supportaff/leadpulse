@@ -1,21 +1,16 @@
-import { cn } from '@/lib/utils'
-import type { IntentLevel } from '@/types'
+interface IntentBadgeProps { level: 'high' | 'medium' | 'low'; }
 
-export default function IntentBadge({ level }: { level: IntentLevel }) {
+export function IntentBadge({ level }: IntentBadgeProps) {
+  const styles = {
+    high:   'bg-green-500/20 text-green-400 border border-green-500/30',
+    medium: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+    low:    'bg-gray-500/20  text-gray-400  border border-gray-500/30',
+  };
   return (
-    <span className={cn(
-      'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold',
-      level === 'high'   && 'bg-green-100 text-green-700',
-      level === 'medium' && 'bg-yellow-100 text-yellow-700',
-      level === 'low'    && 'bg-gray-100 text-gray-500',
-    )}>
-      <span className={cn(
-        'h-1.5 w-1.5 rounded-full',
-        level === 'high'   && 'bg-green-500',
-        level === 'medium' && 'bg-yellow-400',
-        level === 'low'    && 'bg-gray-400',
-      )} />
-      {level.charAt(0).toUpperCase() + level.slice(1)} Intent
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize shrink-0 ${styles[level]}`}>
+      {level}
     </span>
-  )
+  );
 }
+
+export default IntentBadge;

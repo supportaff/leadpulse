@@ -1,108 +1,62 @@
-import Link from 'next/link'
-import { Check } from 'lucide-react'
+'use client';
+import Link from 'next/link';
+import { Check } from 'lucide-react';
 
 const plans = [
   {
-    name: 'Starter',
-    price: 14,
-    description: 'Perfect for solo founders and indie hackers.',
-    features: [
-      '5 tracked keywords',
-      '100 leads/month',
-      '50 AI replies/month',
-      'Reddit + X monitoring',
-      'Email notifications',
-      'Basic dashboard',
-    ],
-    cta: 'Get Started',
-    popular: false,
+    name: 'Starter', price: 14, desc: 'Perfect for solo founders testing the waters.',
+    features: ['3 campaigns', '100 leads/month', '30 AI replies/month', 'Email alerts', 'Reddit scanning'],
   },
   {
-    name: 'Growth',
-    price: 22,
-    description: 'For growing startups scaling outreach.',
-    features: [
-      '15 tracked keywords',
-      '500 leads/month',
-      '250 AI replies/month',
-      'Reddit + X monitoring',
-      'Competitor monitoring',
-      'Priority email alerts',
-      'Campaign analytics',
-    ],
-    cta: 'Start Growing',
-    popular: true,
+    name: 'Growth', price: 22, desc: 'For growing teams that need more volume.', popular: true,
+    features: ['10 campaigns', '500 leads/month', '150 AI replies/month', 'Email alerts', 'Reddit + X scanning', 'Priority support'],
   },
   {
-    name: 'Pro',
-    price: 30,
-    description: 'For teams and agencies at full scale.',
-    features: [
-      'Unlimited keywords',
-      'Unlimited leads',
-      'Unlimited AI replies',
-      'Reddit + X monitoring',
-      'Competitor monitoring',
-      'Advanced analytics',
-      'API access',
-      'Priority support',
-    ],
-    cta: 'Go Pro',
-    popular: false,
+    name: 'Pro', price: 30, desc: 'Unlimited power for serious operators.',
+    features: ['Unlimited campaigns', '2000 leads/month', '500 AI replies/month', 'Email alerts', 'Reddit + X scanning', 'API access', 'White-label ready'],
   },
-]
+];
 
-export default function PricingSection() {
+export function PricingSection() {
   return (
-    <section className="py-24 bg-gray-50">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Pricing That Makes Sense</h2>
-          <p className="text-xl text-gray-500">25% more affordable. 100% more powerful.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`rounded-2xl p-8 border-2 ${
-                plan.popular
-                  ? 'border-blue-500 bg-blue-600 text-white shadow-xl shadow-blue-200'
-                  : 'border-gray-100 bg-white'
-              }`}
-            >
+    <section className="py-20 px-6">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-3xl font-bold text-white text-center mb-4">Simple, transparent pricing</h2>
+        <p className="text-gray-400 text-center mb-12">Start free. Upgrade when you're ready.</p>
+        <div className="grid md:grid-cols-3 gap-6">
+          {plans.map(plan => (
+            <div key={plan.name} className={`relative bg-gray-900 border rounded-2xl p-6 ${
+              plan.popular ? 'border-blue-500 ring-1 ring-blue-500/50' : 'border-gray-800'
+            }`}>
               {plan.popular && (
-                <div className="text-xs font-semibold uppercase tracking-wider bg-blue-500 text-white rounded-full px-3 py-1 inline-block mb-4">
-                  Most Popular
-                </div>
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Most popular</span>
               )}
-              <h3 className={`text-xl font-bold mb-1 ${plan.popular ? 'text-white' : 'text-gray-900'}`}>{plan.name}</h3>
-              <p className={`text-sm mb-4 ${plan.popular ? 'text-blue-100' : 'text-gray-500'}`}>{plan.description}</p>
+              <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
+              <p className="text-gray-400 text-sm mb-4">{plan.desc}</p>
               <div className="mb-6">
-                <span className={`text-5xl font-extrabold ${plan.popular ? 'text-white' : 'text-gray-900'}`}>${plan.price}</span>
-                <span className={`text-sm ${plan.popular ? 'text-blue-200' : 'text-gray-400'}`}>/month</span>
+                <span className="text-4xl font-bold text-white">${plan.price}</span>
+                <span className="text-gray-400 text-sm">/month</span>
               </div>
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm">
-                    <Check className={`h-4 w-4 flex-shrink-0 ${plan.popular ? 'text-blue-200' : 'text-green-500'}`} />
-                    <span className={plan.popular ? 'text-blue-50' : 'text-gray-600'}>{f}</span>
+              <ul className="space-y-2 mb-8">
+                {plan.features.map(f => (
+                  <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                    <Check className="w-4 h-4 text-green-400 shrink-0" />{f}
                   </li>
                 ))}
               </ul>
-              <Link
-                href="/sign-up"
-                className={`block w-full text-center rounded-xl py-3 font-semibold transition-colors ${
-                  plan.popular
-                    ? 'bg-white text-blue-600 hover:bg-blue-50'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {plan.cta}
+              <Link href="/sign-up" className={`block text-center py-2.5 rounded-xl font-semibold text-sm transition-colors ${
+                plan.popular
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                  : 'border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white'
+              }`}>
+                Get started
               </Link>
             </div>
           ))}
         </div>
       </div>
     </section>
-  )
+  );
 }
+
+export default PricingSection;
