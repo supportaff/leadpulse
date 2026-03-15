@@ -3,16 +3,20 @@ import { auth } from '@clerk/nextjs/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { LEAD_COST_INR } from '@/lib/wallet';
 
-const AI_CREDIT_COST = 1; // 1 credit = ₹10 per AI response
+const AI_CREDIT_COST = 1;
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // Check API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ error: 'GEMINI_API_KEY is not configured in environment variables.' }, { status: 500 });
+    }
+
     const supabase = createSupabaseServerClient();
 
-    // Check wallet balance
     const { data: wallet } = await supabase.from('wallets').select('credits').eq('user_id', userId).single();
     if (!wallet || wallet.credits < AI_CREDIT_COST)
       return NextResponse.json({ error: 'Insufficient credits. Please top up your wallet.' }, { status: 402 });
@@ -40,7 +44,6 @@ Provide a practical, step-by-step debt repayment plan. Include:
 
 Be specific with rupee amounts. Keep it practical for an Indian salaried professional.`;
 
-    // Call Gemini API
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
@@ -51,13 +54,27 @@ Be specific with rupee amounts. Keep it practical for an Indian salaried profess
     );
 
     const geminiData = await geminiRes.json();
+    console.log('[Debt Plan Gemini Response]', JSON.stringify(geminiData, null, 2));
+
+    // Surface Gemini API errors clearly
+    if (!geminiRes.ok || geminiData?.error) {
+      const msg = geminiData?.error?.message || `Gemini API error ${geminiRes.status}`;
+      return NextResponse.json({ error: `Gemini error: ${msg}` }, { status: 500 });
+    }
+
+    // Handle safety blocks
+    const finishReason = geminiData?.candidates?.[0]?.finishReason;
+    if (finishReason === 'SAFETY') {
+      return NextResponse.json({ error: 'Response blocked by Gemini safety filters. Try rephrasing your input.' }, { status: 500 });
+    }
+
     const plan = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!plan) throw new Error('AI did not return a response');
+    if (!plan) {
+      return NextResponse.json({ error: `No response from Gemini. Finish reason: ${finishReason || 'unknown'}` }, { status: 500 });
+    }
 
-    // Deduct credit
+    // Deduct credit only after successful response
     await supabase.from('wallets').update({ credits: wallet.credits - AI_CREDIT_COST }).eq('user_id', userId);
-
-    // Log transaction
     await supabase.from('wallet_transactions').insert({
       user_id: userId,
       amount_inr: -(AI_CREDIT_COST * LEAD_COST_INR),

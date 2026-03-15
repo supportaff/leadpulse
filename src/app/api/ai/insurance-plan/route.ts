@@ -10,6 +10,10 @@ export async function POST(req: NextRequest) {
     const { userId } = await auth();
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ error: 'GEMINI_API_KEY is not configured in environment variables.' }, { status: 500 });
+    }
+
     const supabase = createSupabaseServerClient();
 
     const { data: wallet } = await supabase.from('wallets').select('credits').eq('user_id', userId).single();
@@ -49,8 +53,22 @@ Be specific, practical, and tailored for an Indian family. Give rupee amounts.`;
     );
 
     const geminiData = await geminiRes.json();
+    console.log('[Insurance Plan Gemini Response]', JSON.stringify(geminiData, null, 2));
+
+    if (!geminiRes.ok || geminiData?.error) {
+      const msg = geminiData?.error?.message || `Gemini API error ${geminiRes.status}`;
+      return NextResponse.json({ error: `Gemini error: ${msg}` }, { status: 500 });
+    }
+
+    const finishReason = geminiData?.candidates?.[0]?.finishReason;
+    if (finishReason === 'SAFETY') {
+      return NextResponse.json({ error: 'Response blocked by Gemini safety filters.' }, { status: 500 });
+    }
+
     const plan = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!plan) throw new Error('AI did not return a response');
+    if (!plan) {
+      return NextResponse.json({ error: `No response from Gemini. Finish reason: ${finishReason || 'unknown'}` }, { status: 500 });
+    }
 
     await supabase.from('wallets').update({ credits: wallet.credits - AI_CREDIT_COST }).eq('user_id', userId);
     await supabase.from('wallet_transactions').insert({
