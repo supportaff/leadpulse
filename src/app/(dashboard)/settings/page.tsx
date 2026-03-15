@@ -1,20 +1,24 @@
 'use client';
 import { useState } from 'react';
 import { Bell, User, Cpu, Save } from 'lucide-react';
-
-const dummyUser = { name: 'Arun Kumar', email: 'arun@example.com', plan: 'Growth', joined: 'March 2026' };
+import { useUser } from '@clerk/nextjs';
 
 export default function SettingsPage() {
+  const { user, isLoaded } = useUser();
   const [productDesc, setProductDesc] = useState('LeadPulse is a Reddit lead intelligence tool that monitors subreddits for buyer-intent posts and generates AI replies.');
   const [saved, setSaved] = useState(false);
   const [notifications, setNotifications] = useState({ high_intent: true, competitor: true, digest: false });
 
-  const save = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+  const name  = user?.fullName || user?.firstName || 'User';
+  const email = user?.primaryEmailAddress?.emailAddress || '';
+  const joined = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : '';
+  const initial = name.charAt(0).toUpperCase();
+
+  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
   const inputClass = 'w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-4 py-2.5 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-white/30';
+
+  if (!isLoaded) return <div className="text-gray-500 text-sm p-6">Loading...</div>;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -30,25 +34,27 @@ export default function SettingsPage() {
           <h2 className="text-sm font-semibold text-white">Account</h2>
         </div>
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black font-bold text-lg shrink-0">
-            {dummyUser.name.charAt(0)}
-          </div>
+          {user?.imageUrl
+            ? <img src={user.imageUrl} className="w-12 h-12 rounded-full object-cover" alt={name} />
+            : <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black font-bold text-lg shrink-0">{initial}</div>
+          }
           <div>
-            <p className="text-white font-medium">{dummyUser.name}</p>
-            <p className="text-gray-400 text-sm">{dummyUser.email}</p>
-            <span className="text-xs text-gray-600">Plan: <span className="text-white">{dummyUser.plan}</span> · Joined {dummyUser.joined}</span>
+            <p className="text-white font-medium">{name}</p>
+            <p className="text-gray-400 text-sm">{email}</p>
+            {joined && <span className="text-xs text-gray-600">Joined {joined}</span>}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs text-gray-500 mb-1.5 block">Full name</label>
-            <input defaultValue={dummyUser.name} className={inputClass} />
+            <input defaultValue={name} className={inputClass} disabled />
           </div>
           <div>
             <label className="text-xs text-gray-500 mb-1.5 block">Email</label>
-            <input defaultValue={dummyUser.email} className={inputClass} />
+            <input defaultValue={email} className={inputClass} disabled />
           </div>
         </div>
+        <p className="text-xs text-gray-600">Name and email are managed via your Clerk account.</p>
       </div>
 
       {/* AI Personalization */}
