@@ -5,13 +5,14 @@ import { PLANS } from '@/lib/plans';
 
 const plans = Object.values(PLANS);
 
-// Dummy current state — replace with real DB values
-const CURRENT_PLAN = 'starter';
+// Set to null until real DB subscription is wired
+// This means all 3 plans show a Subscribe button
+const CURRENT_PLAN: string | null = null;
 const CURRENT_USAGE = { campaigns: 2, leadsThisMonth: 73, aiReplies: 18 };
 
 export default function BillingPage() {
   const [loading, setLoading] = useState<string | null>(null);
-  const currentPlan = PLANS[CURRENT_PLAN as keyof typeof PLANS];
+  const currentPlan = CURRENT_PLAN ? PLANS[CURRENT_PLAN as keyof typeof PLANS] : null;
 
   const handleCheckout = async (planKey: string) => {
     const plan = PLANS[planKey as keyof typeof PLANS];
@@ -51,19 +52,20 @@ export default function BillingPage() {
     }
   };
 
-  const usageItems = [
-    { label: 'Campaigns', used: CURRENT_USAGE.campaigns,     total: currentPlan.limits.campaigns === 999 ? '∞' : currentPlan.limits.campaigns },
-    { label: 'Leads this month', used: CURRENT_USAGE.leadsThisMonth, total: currentPlan.limits.leadsPerMonth },
-    { label: 'AI Replies',       used: CURRENT_USAGE.aiReplies,      total: currentPlan.limits.aiRepliesPerMonth },
-  ];
+  const usageItems = currentPlan ? [
+    { label: 'Campaigns',        used: CURRENT_USAGE.campaigns,       total: currentPlan.limits.campaigns === 999 ? '∞' : currentPlan.limits.campaigns },
+    { label: 'Leads this month', used: CURRENT_USAGE.leadsThisMonth,  total: currentPlan.limits.leadsPerMonth },
+    { label: 'AI Replies',       used: CURRENT_USAGE.aiReplies,       total: currentPlan.limits.aiRepliesPerMonth },
+  ] : [];
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white">Billing &amp; Plans</h1>
         <p className="text-gray-400 text-sm mt-1">
-          You are on the <span className="text-white font-medium">{currentPlan.label}</span> plan &middot;
-          <span className="text-gray-500 ml-1">₹{currentPlan.price}/month</span>
+          {currentPlan
+            ? <>You are on the <span className="text-white font-medium">{currentPlan.label}</span> plan &middot; <span className="text-gray-500">₹{currentPlan.price}/month</span></>
+            : 'Choose a plan to get started'}
         </p>
       </div>
 
@@ -101,16 +103,19 @@ export default function BillingPage() {
               ) : (
                 <button
                   onClick={() => handleCheckout(plan.key)}
-                  disabled={loading === plan.key}
-                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2 ${
-                    isPopular ? 'bg-black text-white hover:bg-gray-900' : 'border border-white/20 text-white hover:bg-white/5'
+                  disabled={loading === plan.key || !plan.payuLink}
+                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 ${
+                    !plan.payuLink
+                      ? 'border border-white/10 text-gray-600 cursor-not-allowed'
+                      : isPopular
+                        ? 'bg-black text-white hover:bg-gray-900'
+                        : 'border border-white/20 text-white hover:bg-white/5'
                   }`}>
-                  {loading === plan.key ? 'Redirecting...' : (
-                    <>
-                      {plan.payuLink && <ExternalLink className="w-3.5 h-3.5" />}
-                      Subscribe – ₹{plan.price.toLocaleString('en-IN')}/mo
-                    </>
-                  )}
+                  {loading === plan.key
+                    ? 'Redirecting...'
+                    : !plan.payuLink
+                      ? 'Coming soon'
+                      : <><ExternalLink className="w-3.5 h-3.5" />Subscribe – ₹{plan.price.toLocaleString('en-IN')}/mo</>}
                 </button>
               )}
             </div>
@@ -118,40 +123,36 @@ export default function BillingPage() {
         })}
       </div>
 
-      {/* Usage */}
-      <div className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-white">Current usage — {currentPlan.label} plan</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {usageItems.map(({ label, used, total }) => {
-            const pct = typeof total === 'number' ? Math.min(100, Math.round((used / total) * 100)) : 0;
-            const isNearLimit = pct >= 80;
-            return (
-              <div key={label}>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-gray-400">{label}</span>
-                  <span className={isNearLimit ? 'text-amber-400' : 'text-gray-500'}>
-                    {used} / {total}
-                    {isNearLimit && ' ⚠'}
-                  </span>
+      {/* Usage — only show if on a plan */}
+      {currentPlan && usageItems.length > 0 && (
+        <div className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-white">Current usage — {currentPlan.label} plan</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {usageItems.map(({ label, used, total }) => {
+              const pct = typeof total === 'number' ? Math.min(100, Math.round((used / total) * 100)) : 0;
+              const isNearLimit = pct >= 80;
+              return (
+                <div key={label}>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-gray-400">{label}</span>
+                    <span className={isNearLimit ? 'text-amber-400' : 'text-gray-500'}>
+                      {used} / {total}{isNearLimit && ' ⚠'}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full">
+                    <div
+                      className={`h-1.5 rounded-full transition-all ${
+                        pct >= 100 ? 'bg-red-500' : isNearLimit ? 'bg-amber-400' : 'bg-white'
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-1.5 bg-white/5 rounded-full">
-                  <div
-                    className={`h-1.5 rounded-full transition-all ${
-                      pct >= 100 ? 'bg-red-500' : isNearLimit ? 'bg-amber-400' : 'bg-white'
-                    }`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {CURRENT_USAGE.leadsThisMonth >= currentPlan.limits.leadsPerMonth && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-xs text-red-400">
-            🚫 You've reached your lead limit for this month. Upgrade your plan or wait for reset on the 1st.
+              );
+            })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <p className="text-center text-xs text-gray-700">Payments secured by PayU · GST applicable · Cancel anytime</p>
     </div>
