@@ -5,46 +5,22 @@ import { Check } from 'lucide-react';
 const plans = [
   {
     name: 'Starter',
-    price: 999,
+    price: 499,
     desc: 'Perfect for solo founders testing Reddit outbound.',
-    features: [
-      '3 campaigns',
-      '100 leads / month',
-      '30 AI replies / month',
-      'Email alerts',
-      'Reddit scanning',
-      'Basic analytics',
-    ],
+    features: ['3 campaigns', '100 leads / month', '30 AI replies / month', 'Email alerts', 'Reddit scanning', 'Basic analytics'],
   },
   {
     name: 'Growth',
-    price: 1999,
+    price: 999,
     desc: 'For growing teams that need more volume.',
     popular: true,
-    features: [
-      '10 campaigns',
-      '500 leads / month',
-      '150 AI replies / month',
-      'Email alerts',
-      'Reddit scanning',
-      'Competitor monitoring',
-      'Priority support',
-    ],
+    features: ['10 campaigns', '500 leads / month', '150 AI replies / month', 'Email alerts', 'Reddit scanning', 'Competitor monitoring', 'Priority support'],
   },
   {
     name: 'Pro',
-    price: 3999,
+    price: 1499,
     desc: 'Unlimited power for serious operators.',
-    features: [
-      'Unlimited campaigns',
-      '2000 leads / month',
-      '500 AI replies / month',
-      'Email alerts',
-      'Reddit scanning',
-      'Competitor monitoring',
-      'API access',
-      'White-label ready',
-    ],
+    features: ['Unlimited campaigns', '2000 leads / month', '500 AI replies / month', 'Email alerts', 'Reddit scanning', 'Competitor monitoring', 'API access', 'White-label ready'],
   },
 ];
 
@@ -70,7 +46,7 @@ export function PricingSection() {
               <p className={`text-sm mb-5 ${plan.popular ? 'text-gray-600' : 'text-gray-400'}`}>{plan.desc}</p>
               <div className="mb-6">
                 <span className={`text-4xl font-bold ${plan.popular ? 'text-black' : 'text-white'}`}>&#8377;{plan.price.toLocaleString('en-IN')}</span>
-                <span className={`text-sm ml-1 ${plan.popular ? 'text-gray-500' : 'text-gray-500'}`}>/month</span>
+                <span className="text-sm text-gray-500 ml-1">/month</span>
               </div>
               <ul className="space-y-2.5 mb-8">
                 {plan.features.map(f => (

@@ -1,72 +1,108 @@
 'use client';
 import { useState } from 'react';
-import { getDummyUser } from '@/lib/auth';
+import { Bell, User, Cpu, Save } from 'lucide-react';
+
+const dummyUser = { name: 'Arun Kumar', email: 'arun@example.com', plan: 'Growth', joined: 'March 2026' };
 
 export default function SettingsPage() {
-  const user = getDummyUser();
-  const [productDesc, setProductDesc] = useState('');
+  const [productDesc, setProductDesc] = useState('LeadPulse is a Reddit lead intelligence tool that monitors subreddits for buyer-intent posts and generates AI replies.');
   const [saved, setSaved] = useState(false);
+  const [notifications, setNotifications] = useState({ high_intent: true, competitor: true, digest: false });
 
-  const save = async () => {
-    await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_description: productDesc }),
-    });
+  const save = () => {
     setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setTimeout(() => setSaved(false), 2000);
   };
 
+  const inputClass = 'w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-4 py-2.5 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-white/30';
+
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-gray-400 text-sm mt-1">Manage your LeadPulse account preferences</p>
+        <p className="text-gray-400 text-sm mt-1">Manage your account and preferences</p>
       </div>
 
-      <div className="rounded-xl border border-gray-800 bg-gray-900 p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-white">Account</h2>
+      {/* Account */}
+      <div className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-5">
+        <div className="flex items-center gap-2 mb-1">
+          <User className="w-4 h-4 text-gray-500" />
+          <h2 className="text-sm font-semibold text-white">Account</h2>
+        </div>
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-lg">
-            {user.full_name.charAt(0)}
+          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black font-bold text-lg shrink-0">
+            {dummyUser.name.charAt(0)}
           </div>
           <div>
-            <p className="text-white font-medium">{user.full_name}</p>
-            <p className="text-gray-400 text-sm">{user.email}</p>
+            <p className="text-white font-medium">{dummyUser.name}</p>
+            <p className="text-gray-400 text-sm">{dummyUser.email}</p>
+            <span className="text-xs text-gray-600">Plan: <span className="text-white">{dummyUser.plan}</span> · Joined {dummyUser.joined}</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs text-gray-500 mb-1.5 block">Full name</label>
+            <input defaultValue={dummyUser.name} className={inputClass} />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1.5 block">Email</label>
+            <input defaultValue={dummyUser.email} className={inputClass} />
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-800 bg-gray-900 p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-white">AI Personalization</h2>
-        <p className="text-gray-400 text-sm">Describe your product so LeadPulse generates more personalized AI replies.</p>
+      {/* AI Personalization */}
+      <div className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Cpu className="w-4 h-4 text-gray-500" />
+          <h2 className="text-sm font-semibold text-white">AI Personalization</h2>
+        </div>
+        <p className="text-gray-500 text-xs">Describe your product so LeadPulse generates personalised, context-aware Reddit replies.</p>
         <textarea
           value={productDesc}
           onChange={e => setProductDesc(e.target.value)}
           rows={4}
-          placeholder="e.g. We build a lightweight CRM designed for freelancers and small agencies..."
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
+          className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-4 py-3 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
         />
         <button onClick={save}
-          className="px-5 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition">
-          {saved ? '✅ Saved!' : 'Save Settings'}
+          className="flex items-center gap-2 bg-white hover:bg-gray-100 text-black text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+          <Save className="w-4 h-4" />
+          {saved ? 'Saved!' : 'Save Settings'}
         </button>
       </div>
 
-      <div className="rounded-xl border border-gray-800 bg-gray-900 p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-white">Notifications</h2>
+      {/* Notifications */}
+      <div className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Bell className="w-4 h-4 text-gray-500" />
+          <h2 className="text-sm font-semibold text-white">Notifications</h2>
+        </div>
         <div className="space-y-3">
           {[
-            { key: 'email_high_intent', label: 'Email me when a high-intent lead is detected' },
-            { key: 'email_competitor', label: 'Email me on competitor mentions' },
-            { key: 'email_digest', label: 'Daily digest email (every morning)' },
+            { key: 'high_intent' as const, label: 'Email me when a high-intent lead is detected' },
+            { key: 'competitor' as const, label: 'Email me on competitor mentions' },
+            { key: 'digest' as const, label: 'Daily digest email every morning' },
           ].map(({ key, label }) => (
-            <label key={key} className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 accent-purple-500" />
-              <span className="text-sm text-gray-300">{label}</span>
+            <label key={key} className="flex items-center justify-between cursor-pointer group">
+              <span className="text-sm text-gray-300 group-hover:text-white transition">{label}</span>
+              <button
+                onClick={() => setNotifications(n => ({ ...n, [key]: !n[key] }))}
+                className={`w-10 h-5 rounded-full transition-colors relative ${
+                  notifications[key] ? 'bg-white' : 'bg-white/10'
+                }`}>
+                <span className={`absolute top-0.5 w-4 h-4 bg-black rounded-full transition-all ${
+                  notifications[key] ? 'left-5' : 'left-0.5'
+                }`} />
+              </button>
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="bg-white/[0.02] border border-red-500/10 rounded-2xl p-6">
+        <h2 className="text-sm font-semibold text-red-400 mb-3">Danger zone</h2>
+        <p className="text-xs text-gray-500 mb-4">Permanently delete your account and all data. This cannot be undone.</p>
+        <button className="text-xs text-red-500 border border-red-500/30 hover:bg-red-500/10 px-4 py-2 rounded-lg transition">Delete account</button>
       </div>
     </div>
   );
