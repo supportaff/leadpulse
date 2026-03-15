@@ -16,7 +16,7 @@ const nav = [
 ];
 
 function randomToken() {
-  return Math.random().toString(36).slice(2, 9).toUpperCase(); // e.g. "X4K9MWQ"
+  return Math.random().toString(36).slice(2, 9).toUpperCase();
 }
 
 interface SidebarProps {
@@ -35,15 +35,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
 
-  // Generate once per modal open
   const token = useMemo(() => randomToken(), [showDeleteModal]); // eslint-disable-line
 
   const name    = user?.fullName || user?.firstName || user?.username || 'User';
   const initial = name.charAt(0).toUpperCase();
 
   const handleLogout = () => signOut(() => router.push('/'));
-
-  const openModal = () => { setInputVal(''); setError(''); setShowDeleteModal(true); };
+  const openModal  = () => { setInputVal(''); setError(''); setShowDeleteModal(true); };
   const closeModal = () => { setShowDeleteModal(false); setInputVal(''); setError(''); };
 
   const handleDelete = async () => {
@@ -53,11 +51,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     }
     setDeleting(true);
     try {
-      await user?.delete();
+      // Call server API — deletes Supabase data + Clerk account via backend SDK
+      const res = await fetch('/api/auth/delete-account', { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed');
+      // Sign out and redirect
+      await signOut();
       router.push('/');
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Delete failed', e);
-      setError('Failed to delete account. Please try again.');
+      setError(e instanceof Error ? e.message : 'Failed to delete account. Please try again.');
       setDeleting(false);
     }
   };
@@ -68,7 +71,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={onClose} />
       )}
 
-      {/* Delete confirmation modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
           <div className="bg-[#0a0a0a] border border-red-500/20 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
@@ -83,8 +85,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-1">
-              <p className="text-xs text-gray-400">Type this code to confirm deletion:</p>
-              <p className="text-xl font-mono font-bold text-red-400 tracking-widest">{token}</p>
+              <p className="text-xs text-gray-400">Type this code to confirm:</p>
+              <p className="text-xl font-mono font-bold text-red-400 tracking-widest select-all">{token}</p>
             </div>
 
             <input
@@ -99,10 +101,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             {error && <p className="text-xs text-red-400">{error}</p>}
 
             <div className="flex gap-2 pt-1">
-              <button
-                onClick={closeModal}
-                className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-sm transition"
-              >
+              <button onClick={closeModal}
+                className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 text-sm transition">
                 Cancel
               </button>
               <button
@@ -151,10 +151,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         <div className="px-4 pt-4 border-t border-white/8 space-y-1">
-          <button
-            onClick={() => openUserProfile()}
-            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition group text-left"
-          >
+          <button onClick={() => openUserProfile()}
+            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition group text-left">
             {user?.imageUrl
               ? <img src={user.imageUrl} className="w-7 h-7 rounded-full object-cover shrink-0" alt={name} />
               : <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-xs font-bold text-black shrink-0">{initial}</div>
