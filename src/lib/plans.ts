@@ -2,15 +2,15 @@ import { IS_PAYU_LIVE } from '@/lib/payu';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PayU subscription payment links
-// TEST links  → created in PayU test dashboard
-// LIVE links  → created in PayU live dashboard
+// TEST links  → null for now — using checkout API with test key/salt
+// LIVE links  → create these in PayU live dashboard before going live
 // Switch is controlled by NEXT_PUBLIC_PAYU_MODE env var (test | live)
 // ─────────────────────────────────────────────────────────────────────────────
 const PAYU_LINKS = {
   test: {
-    starter: 'https://v.payu.in/PAYUMN/VIWsBvRYSU9b', // ₹499/month TEST
-    growth:  null,  // TODO: create ₹999  test subscription link
-    pro:     null,  // TODO: create ₹1499 test subscription link
+    starter: null,  // using checkout API with test key for now
+    growth:  null,
+    pro:     null,
   },
   live: {
     starter: null,  // TODO: create ₹499  live subscription link
