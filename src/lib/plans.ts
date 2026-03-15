@@ -1,11 +1,10 @@
-// LeadPulse uses a wallet model (₹10/lead)
-// Plans are kept as a reference for AI reply limits only
-// See src/lib/wallet.ts for top-up packs
+// LeadPulse uses a wallet model (₹10/lead) — no plan limits
+// This file kept for backward compatibility only
 
 export const PLAN_LIMITS = {
-  starter: { aiRepliesPerMonth: 30 },
-  growth:  { aiRepliesPerMonth: 150 },
-  pro:     { aiRepliesPerMonth: 500 },
+  starter: { aiRepliesPerMonth: 30,  campaigns: 999, leadsPerMonth: 99999 },
+  growth:  { aiRepliesPerMonth: 150, campaigns: 999, leadsPerMonth: 99999 },
+  pro:     { aiRepliesPerMonth: 500, campaigns: 999, leadsPerMonth: 99999 },
 } as const;
 
 export type PlanKey = keyof typeof PLAN_LIMITS;

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getDummyUserId } from '@/lib/auth';
-import { getPlanLimits } from '@/lib/plans';
 
 export async function GET() {
   const userId = getDummyUserId();
@@ -19,26 +18,17 @@ export async function POST(req: NextRequest) {
   const userId = getDummyUserId();
   const supabase = createSupabaseServerClient();
 
-  // ── Enforce campaign limit based on user plan ──────────────────────────
-  const { data: sub } = await supabase
-    .from('subscriptions')
-    .select('plan')
+  // Wallet model — no campaign limits, just check wallet has credits
+  const { data: wallet } = await supabase
+    .from('wallets')
+    .select('credits')
     .eq('user_id', userId)
-    .eq('status', 'active')
     .single();
 
-  const plan = sub?.plan ?? 'starter';
-  const limits = getPlanLimits(plan);
-
-  const { count: campaignCount } = await supabase
-    .from('campaigns')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId);
-
-  if ((campaignCount ?? 0) >= limits.campaigns) {
+  if ((wallet?.credits ?? 0) <= 0) {
     return NextResponse.json(
-      { error: 'Campaign limit reached', limit: limits.campaigns, plan },
-      { status: 429 }
+      { error: 'Insufficient wallet credits. Top up to create campaigns.', credits: 0 },
+      { status: 402 }
     );
   }
 
