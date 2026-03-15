@@ -1,8 +1,8 @@
 export const env = {
   supabase: {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    url: process.env.LP_SUPABASE_URL!,
+    anonKey: process.env.LP_SUPABASE_ANON_KEY!,
+    serviceKey: process.env.LP_SUPABASE_SERVICE_ROLE_KEY!,
   },
   clerk: {
     secretKey: process.env.CLERK_SECRET_KEY!,
