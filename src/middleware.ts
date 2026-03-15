@@ -1,27 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PUBLIC_ROUTES = ['/', '/pricing', '/features', '/sign-in', '/sign-up', '/api/webhooks', '/api/cron'];
+const PROTECTED = ['/dashboard', '/leads', '/campaigns', '/analytics', '/billing', '/settings'];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Always allow public routes, static files, api routes
-  const isPublic = PUBLIC_ROUTES.some(r => pathname.startsWith(r))
-    || pathname.startsWith('/_next')
-    || pathname.startsWith('/api');
+  const isProtected = PROTECTED.some(p => pathname === p || pathname.startsWith(p + '/'));
+  if (!isProtected) return NextResponse.next();
 
-  if (isPublic) return NextResponse.next();
+  // Accept either the new real cookie or old dummy cookie (during transition)
+  const session = req.cookies.get('auth_session')?.value;
+  const dummy = req.cookies.get('dummy_auth')?.value;
 
-  // Check dummy auth cookie
-  const auth = req.cookies.get('dummy_auth')?.value;
-  if (auth === 'authenticated') return NextResponse.next();
+  if (!session && dummy !== 'authenticated') {
+    const loginUrl = new URL('/sign-in', req.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-  // Redirect to sign-in
-  const signIn = new URL('/sign-in', req.url);
-  signIn.searchParams.set('redirect', pathname);
-  return NextResponse.redirect(signIn);
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)', '/(api|trpc)(.*)'],
+  matcher: ['/dashboard/:path*', '/leads/:path*', '/campaigns/:path*', '/analytics/:path*', '/billing/:path*', '/settings/:path*'],
 };
