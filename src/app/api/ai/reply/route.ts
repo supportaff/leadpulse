@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { generateReply } from '@/lib/openai';
+import { getDummyUserId } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+  const userId = getDummyUserId();
   const supabase = createSupabaseServerClient();
-  const { data: user } = await supabase.from('users').select('id, plan').eq('clerk_id', userId).single();
+  const { data: user } = await supabase.from('users').select('id, plan').eq('id', userId).single();
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const { lead_id, user_product_description } = await req.json();
@@ -18,11 +16,7 @@ export async function POST(req: NextRequest) {
   if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
 
   const postContext = [lead.post_title, lead.post_body].filter(Boolean).join('\n');
-  const reply = await generateReply(
-    postContext,
-    user_product_description ?? '',
-    'LeadPulse'
-  );
+  const reply = await generateReply(postContext, user_product_description ?? '', 'LeadPulse');
 
   await supabase.from('leads').update({ ai_reply: reply }).eq('id', lead_id);
 

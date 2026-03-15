@@ -1,6 +1,5 @@
 'use client';
 import Link from 'next/link';
-import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 
 export function Navbar() {
   return (
@@ -10,14 +9,8 @@ export function Navbar() {
         <div className="flex items-center gap-6">
           <Link href="/features" className="text-sm text-gray-400 hover:text-white transition-colors">Features</Link>
           <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors">Pricing</Link>
-          <SignedOut>
-            <Link href="/sign-in" className="text-sm text-gray-400 hover:text-white transition-colors">Sign in</Link>
-            <Link href="/sign-up" className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Get started</Link>
-          </SignedOut>
-          <SignedIn>
-            <Link href="/dashboard" className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Dashboard</Link>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          <Link href="/sign-in" className="text-sm text-gray-400 hover:text-white transition-colors">Sign in</Link>
+          <Link href="/dashboard" className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">Dashboard</Link>
         </div>
       </div>
     </nav>

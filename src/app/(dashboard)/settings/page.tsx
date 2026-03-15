@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { getDummyUser } from '@/lib/auth';
 
 export default function SettingsPage() {
-  const { user } = useUser();
+  const user = getDummyUser();
   const [productDesc, setProductDesc] = useState('');
   const [saved, setSaved] = useState(false);
 
@@ -27,13 +27,12 @@ export default function SettingsPage() {
       <div className="rounded-xl border border-gray-800 bg-gray-900 p-6 space-y-4">
         <h2 className="text-sm font-semibold text-white">Account</h2>
         <div className="flex items-center gap-4">
-          {user?.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.imageUrl} alt="Avatar" className="w-12 h-12 rounded-full" />
-          )}
+          <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-lg">
+            {user.full_name.charAt(0)}
+          </div>
           <div>
-            <p className="text-white font-medium">{user?.fullName}</p>
-            <p className="text-gray-400 text-sm">{user?.primaryEmailAddress?.emailAddress}</p>
+            <p className="text-white font-medium">{user.full_name}</p>
+            <p className="text-gray-400 text-sm">{user.email}</p>
           </div>
         </div>
       </div>
@@ -45,7 +44,7 @@ export default function SettingsPage() {
           value={productDesc}
           onChange={e => setProductDesc(e.target.value)}
           rows={4}
-          placeholder="e.g. We build a lightweight CRM designed for freelancers and small agencies. Our core differentiators are..."
+          placeholder="e.g. We build a lightweight CRM designed for freelancers and small agencies..."
           className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
         />
         <button onClick={save}
