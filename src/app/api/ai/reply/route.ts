@@ -24,10 +24,8 @@ export async function POST(req: NextRequest) {
     'LeadPulse'
   );
 
-  // Save reply back to lead
   await supabase.from('leads').update({ ai_reply: reply }).eq('id', lead_id);
 
-  // Track usage
   const month = new Date().toISOString().slice(0, 7);
   await supabase.rpc('increment_usage', { p_user_id: user.id, p_month: month, p_field: 'replies_generated' });
 

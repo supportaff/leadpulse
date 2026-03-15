@@ -11,15 +11,15 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const { data: leads } = await supabase
-    .from('leads').select('intent_level, platform, status, is_competitor, matched_keywords, detected_at')
+    .from('leads')
+    .select('intent_level, platform, status, is_competitor, matched_keywords, detected_at')
     .eq('user_id', user.id);
 
   const all = leads ?? [];
 
-  // Flatten matched keywords and count
   const keywordCounts: Record<string, number> = {};
   for (const lead of all) {
-    for (const kw of lead.matched_keywords ?? []) {
+    for (const kw of (lead.matched_keywords ?? [])) {
       keywordCounts[kw] = (keywordCounts[kw] ?? 0) + 1;
     }
   }

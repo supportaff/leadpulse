@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await params;
 
   const supabase = createSupabaseServerClient();
   const { data: user } = await supabase.from('users').select('id').eq('clerk_id', userId).single();
@@ -12,15 +16,19 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
   const { data: lead } = await supabase
     .from('leads').select('*')
-    .eq('id', params.id).eq('user_id', user.id).single();
+    .eq('id', id).eq('user_id', user.id).single();
 
   if (!lead) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json({ lead });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await params;
 
   const supabase = createSupabaseServerClient();
   const { data: user } = await supabase.from('users').select('id').eq('clerk_id', userId).single();
@@ -34,7 +42,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const { data: lead } = await supabase
     .from('leads').update(update)
-    .eq('id', params.id).eq('user_id', user.id)
+    .eq('id', id).eq('user_id', user.id)
     .select().single();
 
   return NextResponse.json({ lead });

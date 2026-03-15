@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
 
   const txnid = `LP-${Date.now()}-${user.id.slice(0, 8)}`;
 
-  // Store pending subscription
   await supabase.from('subscriptions').insert({
     user_id: user.id,
     payu_txn_id: txnid,

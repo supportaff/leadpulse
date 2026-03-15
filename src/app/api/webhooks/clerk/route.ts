@@ -11,9 +11,12 @@ export async function POST(req: NextRequest) {
     'svix-signature': req.headers.get('svix-signature') ?? '',
   };
 
+  // Use the Clerk Webhook Secret (not the secret key) — set CLERK_WEBHOOK_SECRET in env
+  const webhookSecret = process.env.CLERK_WEBHOOK_SECRET ?? '';
+
   let event: { type: string; data: Record<string, unknown> };
   try {
-    const wh = new Webhook(env.clerk.secretKey);
+    const wh = new Webhook(webhookSecret);
     event = wh.verify(payload, headers) as { type: string; data: Record<string, unknown> };
   } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
