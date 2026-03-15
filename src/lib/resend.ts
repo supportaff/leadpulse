@@ -1,10 +1,12 @@
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
 
-const resend = new Resend(env.resend.apiKey);
+function getResend() {
+  return new Resend(env.resend.apiKey);
+}
 
 export async function sendHighIntentAlert(toEmail: string, leadCount: number) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: env.resend.fromEmail,
     to: toEmail,
     subject: `🔥 ${leadCount} new high-intent lead${leadCount > 1 ? 's' : ''} detected`,
@@ -22,7 +24,7 @@ export async function sendHighIntentAlert(toEmail: string, leadCount: number) {
 }
 
 export async function sendWelcomeEmail(toEmail: string, firstName: string) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: env.resend.fromEmail,
     to: toEmail,
     subject: `Welcome to LeadPulse, ${firstName}!`,
