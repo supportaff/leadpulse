@@ -1,17 +1,17 @@
-import { cookies } from 'next/headers';
+import { auth, currentUser } from '@clerk/nextjs/server';
 
 export async function getSessionUser() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get('auth_session')?.value;
-  const name = cookieStore.get('user_name')?.value || 'User';
-  const email = cookieStore.get('user_email')?.value || '';
-
+  const { userId } = await auth();
   if (!userId) return null;
-  return { userId, name, email };
+  const user = await currentUser();
+  return {
+    userId,
+    name: user?.fullName || user?.firstName || 'User',
+    email: user?.emailAddresses?.[0]?.emailAddress || '',
+  };
 }
 
 // Stub used by all API routes until real DB auth is wired
-// Returns a consistent dummy user ID for development
 export function getDummyUserId(): string {
   return 'dummy_user_001';
 }
