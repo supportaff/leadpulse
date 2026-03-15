@@ -1,17 +1,13 @@
-interface IntentBadgeProps {
-  level: 'high' | 'medium' | 'low';
-  score?: number;
-}
-
-export function IntentBadge({ level, score }: IntentBadgeProps) {
+export function IntentBadge({ level, score }: { level: string; score: number }) {
   const styles = {
-    high:   'bg-green-500/20 text-green-400 border border-green-500/30',
-    medium: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
-    low:    'bg-gray-500/20  text-gray-400  border border-gray-500/30',
-  };
+    high:   'bg-white text-black',
+    medium: 'bg-white/10 text-white border border-white/20',
+    low:    'bg-white/5 text-gray-500 border border-white/10',
+  }[level] ?? 'bg-white/5 text-gray-500';
+
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full capitalize shrink-0 ${styles[level]}`}>
-      {level}{score !== undefined && <span className="opacity-70">· {score}</span>}
+    <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${styles}`}>
+      {score} · {level}
     </span>
   );
 }

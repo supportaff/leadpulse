@@ -16,20 +16,21 @@ const nav = [
 export function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-56 shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col py-6">
+    <aside className="w-56 shrink-0 bg-black border-r border-white/8 flex flex-col py-6">
       <div className="px-5 mb-8">
-        <span className="text-xl font-bold text-white">LeadPulse</span>
+        <span className="text-xl font-bold text-white tracking-tight">LeadPulse</span>
+        <p className="text-xs text-gray-600 mt-0.5">Reddit Lead Intelligence</p>
       </div>
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="flex-1 space-y-0.5 px-3">
         {nav.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
             className={cn(
-              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
               pathname === href || pathname.startsWith(href + '/')
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                ? 'bg-white text-black'
+                : 'text-gray-500 hover:text-white hover:bg-white/5'
             )}
           >
             <Icon className="w-4 h-4" />
@@ -37,6 +38,15 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
+      <div className="px-4 pt-4 border-t border-white/8">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white">A</div>
+          <div>
+            <p className="text-xs font-medium text-white">Admin User</p>
+            <p className="text-xs text-gray-600">Pro plan</p>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }

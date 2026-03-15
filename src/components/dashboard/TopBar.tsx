@@ -11,11 +11,15 @@ export function TopBar() {
   };
 
   return (
-    <header className="h-14 border-b border-gray-800 bg-gray-900 flex items-center justify-end px-6 gap-4">
-      <button className="text-gray-400 hover:text-white transition-colors">
-        <Bell className="w-5 h-5" />
+    <header className="h-14 border-b border-white/8 bg-black flex items-center justify-end px-6 gap-3">
+      <button className="text-gray-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5">
+        <Bell className="w-4 h-4" />
       </button>
-      <button onClick={handleLogout} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm">
+      <div className="w-px h-4 bg-white/10" />
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-sm px-3 py-1.5 rounded-lg hover:bg-white/5"
+      >
         <LogOut className="w-4 h-4" />
         Logout
       </button>

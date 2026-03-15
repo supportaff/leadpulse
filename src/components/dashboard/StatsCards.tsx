@@ -7,27 +7,26 @@ interface Stats {
   campaigns: number;
 }
 
-interface StatsCardsProps {
-  stats: Stats;
-}
-
-export function StatsCards({ stats }: StatsCardsProps) {
+export function StatsCards({ stats }: { stats: Stats }) {
   const items = [
-    { label: 'Total Leads',  value: stats.totalLeads,  icon: Users,         color: 'text-blue-400'   },
-    { label: 'High Intent',  value: stats.highIntent,  icon: TrendingUp,    color: 'text-green-400'  },
-    { label: 'Replied',      value: stats.replied,     icon: MessageSquare, color: 'text-purple-400' },
-    { label: 'Campaigns',    value: stats.campaigns,   icon: Target,        color: 'text-orange-400' },
+    { label: 'Total Leads',  value: stats.totalLeads, icon: Users,         change: '+12 today' },
+    { label: 'High Intent',  value: stats.highIntent, icon: TrendingUp,    change: '+5 today'  },
+    { label: 'Replied',      value: stats.replied,    icon: MessageSquare, change: '19% rate'  },
+    { label: 'Campaigns',    value: stats.campaigns,  icon: Target,        change: 'All active' },
   ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {items.map(({ label, value, icon: Icon, color }) => (
-        <div key={label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-gray-400">{label}</span>
-            <Icon className={`w-5 h-5 ${color}`} />
+      {items.map(({ label, value, icon: Icon, change }) => (
+        <div key={label} className="bg-white/[0.02] border border-white/8 rounded-2xl p-5 hover:border-white/20 transition-colors">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{label}</span>
+            <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center">
+              <Icon className="w-4 h-4 text-white/60" />
+            </div>
           </div>
-          <p className="text-3xl font-bold text-white">{value}</p>
+          <p className="text-3xl font-bold text-white mb-1">{value.toLocaleString()}</p>
+          <p className="text-xs text-gray-600">{change}</p>
         </div>
       ))}
     </div>
