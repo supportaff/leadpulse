@@ -30,7 +30,6 @@ export default function SignInPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // OTPless callback — called after successful auth
     window.otpless = async (otplessUser: OTPlessUser) => {
       if (otplessUser.status !== 'SUCCESS') return;
 
@@ -39,28 +38,19 @@ export default function SignInPage() {
       const email = identity?.identityType === 'EMAIL' ? identity.identityValue : '';
       const mobile = identity?.identityType === 'MOBILE' ? identity.identityValue : '';
 
-      // Send token + user info to our backend
       const res = await fetch('/api/auth/otpless', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: otplessUser.token,
-          userId: otplessUser.userId,
-          name,
-          email,
-          mobile,
-        }),
+        body: JSON.stringify({ token: otplessUser.token, userId: otplessUser.userId, name, email, mobile }),
       });
 
-      if (res.ok) {
-        router.push('/dashboard');
-      }
+      if (res.ok) router.push('/dashboard');
     };
   }, [router]);
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-5">
-      {/* OTPless SDK — loaded only on this page */}
+      {/* OTPless SDK — loads the SIDE_CURTAIN widget */}
       <Script
         id="otpless-sdk"
         src="https://otpless.com/v4/auth.js"
@@ -70,25 +60,46 @@ export default function SignInPage() {
 
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <Link href="/" className="text-2xl font-bold text-white tracking-tight">LeadPulse</Link>
           <p className="text-gray-500 text-sm mt-2">Reddit Lead Intelligence</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 sm:p-8">
-          <h1 className="text-xl font-bold text-white mb-1">Sign in</h1>
-          <p className="text-gray-500 text-sm mb-6">Use WhatsApp, email OTP, or Google to continue.</p>
+        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-8 space-y-6">
+          <div>
+            <h1 className="text-xl font-bold text-white">Welcome back</h1>
+            <p className="text-gray-500 text-sm mt-1">Sign in to access your dashboard</p>
+          </div>
 
-          {/* OTPless mounts the widget here */}
-          <div id="otpless-login-page" />
+          {/* Features preview */}
+          <ul className="space-y-2">
+            {[
+              '📡 Real-time Reddit lead scanning',
+              '🤖 AI intent scoring & reply drafts',
+              '🔔 Instant high-intent alerts',
+            ].map(f => (
+              <li key={f} className="text-xs text-gray-500 flex items-center gap-2">{f}</li>
+            ))}
+          </ul>
+
+          {/* OTPless SIDE_CURTAIN trigger */}
+          <div id="otpless" data-type="SIDE_CURTAIN">
+            <button className="w-full bg-white hover:bg-gray-100 text-black font-semibold text-sm py-3 rounded-xl transition-colors">
+              Sign in to LeadPulse
+            </button>
+          </div>
+
+          <p className="text-center text-xs text-gray-700">
+            No password needed &middot; WhatsApp, Email OTP, or Google
+          </p>
         </div>
 
         <p className="text-center text-xs text-gray-700 mt-6">
-          By signing in, you agree to our{' '}
-          <Link href="/terms" className="text-gray-400 hover:text-white underline underline-offset-2">Terms</Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="text-gray-400 hover:text-white underline underline-offset-2">Privacy Policy</Link>.
+          By signing in you agree to our{' '}
+          <Link href="/terms" className="text-gray-500 hover:text-white underline underline-offset-2">Terms</Link>
+          {' '}and{' '}
+          <Link href="/privacy" className="text-gray-500 hover:text-white underline underline-offset-2">Privacy Policy</Link>
         </p>
       </div>
     </div>
