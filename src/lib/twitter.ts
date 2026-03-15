@@ -9,23 +9,17 @@ interface Tweet {
 
 class TwitterClient {
   async searchTweets(keywords: string[]): Promise<Tweet[]> {
-    const query = keywords.map(k => `"${k}"`).join(' OR ');
-    const fullQuery = `(${query}) lang:en -is:retweet -is:reply`;
-
+    const query = keywords.map(k => `"${k}"`).join(' OR ') + ' -is:retweet lang:en';
     const url = new URL('https://api.twitter.com/2/tweets/search/recent');
-    url.searchParams.set('query', fullQuery);
+    url.searchParams.set('query', query);
     url.searchParams.set('max_results', '50');
-    url.searchParams.set('tweet.fields', 'created_at,author_id,text');
+    url.searchParams.set('tweet.fields', 'created_at,author_id');
 
     const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${env.twitter.bearerToken}` },
     });
 
-    if (!res.ok) {
-      console.error('Twitter API error:', await res.text());
-      return [];
-    }
-
+    if (!res.ok) throw new Error(`Twitter search failed: ${res.status}`);
     const data = await res.json();
     return data.data ?? [];
   }

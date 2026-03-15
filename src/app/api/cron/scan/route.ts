@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
     const user = campaign.users as { id: string; email: string; plan: string };
     let newHighIntent = 0;
 
-    // ── Reddit scan ──
     if (campaign.platforms.includes('reddit')) {
       try {
         const posts = await redditClient.searchPosts(campaign.keywords, campaign.subreddits);
@@ -42,15 +41,15 @@ export async function GET(req: NextRequest) {
             campaign_id: campaign.id,
             platform: 'reddit',
             post_id: post.id,
-            post_url: `https://reddit.com${post.url}`,
+            post_url: `https://reddit.com${post.permalink}`,
             post_title: post.title,
             post_body: post.selftext ?? '',
             author_username: post.author,
             subreddit: post.subreddit,
             intent_score: result.score,
-            intent_level: result.level,
+            intent_level: result.intent_level,
             matched_keywords: result.matched_signals ?? [],
-            ai_summary: result.reason,
+            ai_summary: result.reasoning,
             is_competitor: result.is_competitor_mention ?? false,
             competitor_name: result.competitor_name ?? null,
             posted_at: new Date(post.created_utc * 1000).toISOString(),
@@ -58,7 +57,7 @@ export async function GET(req: NextRequest) {
 
           if (!error) {
             totalStored++;
-            if (result.level === 'high') newHighIntent++;
+            if (result.intent_level === 'high') newHighIntent++;
           }
         }
       } catch (err) {
@@ -66,7 +65,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // ── Twitter/X scan ──
     if (campaign.platforms.includes('twitter')) {
       try {
         const tweets = await twitterClient.searchTweets(campaign.keywords);
@@ -83,9 +81,9 @@ export async function GET(req: NextRequest) {
             post_body: tweet.text,
             author_username: tweet.author_id,
             intent_score: result.score,
-            intent_level: result.level,
+            intent_level: result.intent_level,
             matched_keywords: result.matched_signals ?? [],
-            ai_summary: result.reason,
+            ai_summary: result.reasoning,
             is_competitor: result.is_competitor_mention ?? false,
             competitor_name: result.competitor_name ?? null,
             posted_at: tweet.created_at,
@@ -93,7 +91,7 @@ export async function GET(req: NextRequest) {
 
           if (!error) {
             totalStored++;
-            if (result.level === 'high') newHighIntent++;
+            if (result.intent_level === 'high') newHighIntent++;
           }
         }
       } catch (err) {
@@ -106,7 +104,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Send email alerts
   for (const alert of highIntentAlerts) {
     await sendHighIntentAlert(alert.email, alert.leadCount).catch(console.error);
   }
