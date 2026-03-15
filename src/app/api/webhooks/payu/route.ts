@@ -4,7 +4,6 @@ import { LEAD_COST_INR } from '@/lib/wallet';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 function htmlRedirect(url: string) {
-  // PayU POSTs to surl — browser follows this page, so we return HTML that auto-redirects
   return new NextResponse(
     `<!DOCTYPE html><html><head>
     <meta http-equiv="refresh" content="0;url=${url}" />
@@ -35,17 +34,16 @@ export async function POST(req: NextRequest) {
       const supabase = createSupabaseServerClient();
       const creditsToAdd = Math.floor(Number(amount) / LEAD_COST_INR);
 
-      // Find pending topup to get user_id
+      // Find pending topup — includes email+name now
       const { data: pending, error: pendingErr } = await supabase
         .from('wallet_topups')
-        .select('user_id, credits')
+        .select('user_id, credits, email, name')
         .eq('txnid', txnid)
         .single();
 
       console.log('[PayU Webhook] pending topup:', pending, pendingErr);
 
       if (pending?.user_id) {
-        // Use credits from topup row (more accurate than amount / 10)
         const credits = pending.credits ?? creditsToAdd;
 
         // Add to wallet
@@ -61,9 +59,11 @@ export async function POST(req: NextRequest) {
           .update({ status: 'paid', payu_payment_id: mihpayid })
           .eq('txnid', txnid);
 
-        // Log transaction with user_id
+        // Log full transaction with email + name
         await supabase.from('wallet_transactions').insert({
           user_id: pending.user_id,
+          email: pending.email,
+          name: pending.name,
           payu_txn_id: txnid,
           payu_payment_id: mihpayid,
           amount_inr: Number(amount),
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
           status: 'success',
         });
 
-        console.log('[PayU Webhook] ✅ credited', credits, 'leads to', pending.user_id);
+        console.log('[PayU Webhook] ✅ credited', credits, 'leads to', pending.user_id, '/', pending.email);
         return htmlRedirect(`${appUrl}/billing?status=success&credits=${credits}`);
       } else {
         console.error('[PayU Webhook] pending topup not found for txnid:', txnid);

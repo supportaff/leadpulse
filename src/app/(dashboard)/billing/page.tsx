@@ -14,28 +14,23 @@ function BillingContent() {
   const [balance, setBalance] = useState<number | null>(null);
   const { user } = useUser();
 
-  // Fetch real wallet balance
   useEffect(() => {
     if (!user) return;
     fetch('/api/wallet/balance')
       .then(r => r.json())
       .then(d => setBalance(d.credits ?? 0))
       .catch(() => setBalance(0));
-  }, [user, statusParam]); // refetch after payment return
+  }, [user?.id, statusParam]);
 
   const handleTopup = async (packId: string) => {
     if (!user) return;
     setLoading(packId);
     try {
+      // Only send packId — server reads userId+email+name from Clerk session
       const res = await fetch('/api/billing/topup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          packId,
-          userId: user.id,
-          email: user.primaryEmailAddress?.emailAddress,
-          name: user.fullName || user.firstName || 'User',
-        }),
+        body: JSON.stringify({ packId }),
       });
       const data = await res.json();
       if (data.error) { alert(data.error); return; }
@@ -79,7 +74,6 @@ function BillingContent() {
         <p className="text-gray-400 text-sm mt-1">Top up your wallet and unlock leads at ₹{LEAD_COST_INR} per lead.</p>
       </div>
 
-      {/* Wallet balance */}
       <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
@@ -99,7 +93,6 @@ function BillingContent() {
         )}
       </div>
 
-      {/* How it works */}
       <div className="bg-white/[0.02] border border-white/8 rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2"><Zap className="w-4 h-4" /> How it works</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-400">
@@ -109,7 +102,6 @@ function BillingContent() {
         </div>
       </div>
 
-      {/* Top-up packs */}
       <div>
         <h2 className="text-sm font-semibold text-white mb-4">Top-up packs</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
