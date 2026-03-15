@@ -1,41 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { generatePayUCheckout } from '@/lib/payu';
-import { getDummyUserId, getDummyUser } from '@/lib/auth';
+import crypto from 'crypto';
+import { getPlan } from '@/lib/plans';
 
 export async function POST(req: NextRequest) {
-  const userId = getDummyUserId();
-  const dummyUser = getDummyUser();
-  const supabase = createSupabaseServerClient();
+  try {
+    const { plan: planKey } = await req.json();
+    const plan = getPlan(planKey);
+    if (!plan) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
 
-  const { data: user } = await supabase
-    .from('users').select('id, email, full_name').eq('id', userId).single();
+    // If plan has a direct PayU subscription link, just return it
+    if (plan.payuLink) {
+      return NextResponse.json({ payuLink: plan.payuLink });
+    }
 
-  const email = user?.email ?? dummyUser.email;
-  const full_name = user?.full_name ?? dummyUser.full_name;
-  const dbUserId = user?.id ?? userId;
+    const key = process.env.PAYU_MERCHANT_KEY;
+    const salt = process.env.PAYU_MERCHANT_SALT;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  const { plan } = await req.json();
-  const prices: Record<string, number> = { starter: 14, growth: 22, pro: 30 };
-  const amount = prices[plan];
-  if (!amount) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+    if (!key || !salt) {
+      console.warn('PayU keys not configured');
+      return NextResponse.json({ error: 'Payment not configured' }, { status: 503 });
+    }
 
-  const txnid = `LP-${Date.now()}-${dbUserId.slice(0, 8)}`;
+    const txnid = `LP-${planKey.toUpperCase()}-${Date.now()}`;
+    const amountStr = plan.price.toFixed(2);
+    const firstname = 'User';
+    const email = 'user@leadpulse.in';
+    const phone = '9999999999';
+    const surl = `${appUrl}/api/webhooks/payu`;
+    const furl = `${appUrl}/billing?status=failed`;
 
-  await supabase.from('subscriptions').insert({
-    user_id: dbUserId, payu_txn_id: txnid, plan, amount, currency: 'USD', status: 'pending',
-  });
+    const hashString = `${key}|${txnid}|${amountStr}|${plan.productinfo}|${firstname}|${email}|||||||||||${salt}`;
+    const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
-  const checkoutData = generatePayUCheckout({
-    txnid,
-    amount: amount.toFixed(2),
-    productinfo: `LeadPulse ${plan} plan`,
-    firstname: full_name?.split(' ')[0] ?? 'User',
-    email,
-    phone: '9999999999',
-    surl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/payu`,
-    furl: `${process.env.NEXT_PUBLIC_APP_URL}/billing?status=failed`,
-  });
-
-  return NextResponse.json(checkoutData);
+    return NextResponse.json({
+      action: 'https://test.payu.in/_payment',
+      fields: { key, txnid, amount: amountStr, productinfo: plan.productinfo, firstname, email, phone, surl, furl, hash, service_provider: 'payu_paisa' },
+    });
+  } catch (err) {
+    console.error('Checkout route error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

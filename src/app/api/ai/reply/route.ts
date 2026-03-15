@@ -1,27 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { generateReply } from '@/lib/openai';
 import { getDummyUserId } from '@/lib/auth';
+import { getPlanLimits } from '@/lib/plans';
 
 export async function POST(req: NextRequest) {
   const userId = getDummyUserId();
   const supabase = createSupabaseServerClient();
-  const { data: user } = await supabase.from('users').select('id, plan').eq('id', userId).single();
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-  const { lead_id, user_product_description } = await req.json();
+  // ── Enforce AI reply limit based on user plan ────────────────────────
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('plan')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .single();
 
-  const { data: lead } = await supabase
-    .from('leads').select('*').eq('id', lead_id).eq('user_id', user.id).single();
-  if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+  const plan = sub?.plan ?? 'starter';
+  const limits = getPlanLimits(plan);
 
-  const postContext = [lead.post_title, lead.post_body].filter(Boolean).join('\n');
-  const reply = await generateReply(postContext, user_product_description ?? '', 'LeadPulse');
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
 
-  await supabase.from('leads').update({ ai_reply: reply }).eq('id', lead_id);
+  const { count: repliesThisMonth } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .not('ai_reply', 'is', null)
+    .gte('updated_at', startOfMonth.toISOString());
 
-  const month = new Date().toISOString().slice(0, 7);
-  await supabase.rpc('increment_usage', { p_user_id: user.id, p_month: month, p_field: 'replies_generated' });
+  if ((repliesThisMonth ?? 0) >= limits.aiRepliesPerMonth) {
+    return NextResponse.json(
+      { error: 'AI reply limit reached', limit: limits.aiRepliesPerMonth, plan },
+      { status: 429 }
+    );
+  }
 
+  const { leadId } = await req.json();
+  if (!leadId) return NextResponse.json({ error: 'leadId required' }, { status: 400 });
+
+  // Fetch lead
+  const { data: lead, error } = await supabase
+    .from('leads').select('*').eq('id', leadId).eq('user_id', userId).single();
+  if (error || !lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+
+  // TODO: call Gemini/OpenAI to generate real reply
+  const reply = `Hi! I noticed you're looking for ${lead.title}. We built LeadPulse specifically for this — happy to share more details if helpful!`;
+
+  await supabase.from('leads').update({ ai_reply: reply, status: 'replied' }).eq('id', leadId);
   return NextResponse.json({ reply });
 }

@@ -1,64 +1,88 @@
 'use client';
 import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, ExternalLink } from 'lucide-react';
+import { PLANS } from '@/lib/plans';
 
-const plans = [
-  {
-    key: 'starter',
-    label: 'Starter',
-    price: 499,
-    desc: 'Solo founders testing Reddit outbound.',
-    features: ['3 campaigns', '100 leads / month', '30 AI replies / month', 'Email alerts', 'Basic analytics'],
-  },
-  {
-    key: 'growth',
-    label: 'Growth',
-    price: 999,
-    desc: 'Growing teams that need more volume.',
-    popular: true,
-    features: ['10 campaigns', '500 leads / month', '150 AI replies / month', 'Email alerts', 'Competitor monitoring', 'Priority support'],
-  },
-  {
-    key: 'pro',
-    label: 'Pro',
-    price: 1499,
-    desc: 'Unlimited power for serious operators.',
-    features: ['Unlimited campaigns', '2000 leads / month', '500 AI replies / month', 'Email alerts', 'Competitor monitoring', 'API access', 'White-label ready'],
-  },
-];
+const plans = Object.values(PLANS);
+
+// Dummy current state — replace with real DB values
+const CURRENT_PLAN = 'starter';
+const CURRENT_USAGE = { campaigns: 2, leadsThisMonth: 73, aiReplies: 18 };
 
 export default function BillingPage() {
-  const [current] = useState('growth');
   const [loading, setLoading] = useState<string | null>(null);
+  const currentPlan = PLANS[CURRENT_PLAN as keyof typeof PLANS];
 
-  const handleCheckout = async (plan: string) => {
-    setLoading(plan);
-    await new Promise(r => setTimeout(r, 1200));
-    setLoading(null);
-    alert(`Redirecting to PayU checkout for ₹${plans.find(p => p.key === plan)?.price}/month...`);
+  const handleCheckout = async (planKey: string) => {
+    const plan = PLANS[planKey as keyof typeof PLANS];
+    if (!plan) return;
+
+    // If plan has a direct PayU subscription link, redirect straight there
+    if (plan.payuLink) {
+      window.location.href = plan.payuLink;
+      return;
+    }
+
+    // Otherwise call our checkout API to generate PayU form
+    setLoading(planKey);
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planKey }),
+      });
+      const data = await res.json();
+      if (data.action) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = data.action;
+        Object.entries(data.fields as Record<string, string>).forEach(([k, v]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden'; input.name = k; input.value = v;
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+      }
+    } catch {
+      alert('Payment initiation failed. Please try again.');
+    } finally {
+      setLoading(null);
+    }
   };
+
+  const usageItems = [
+    { label: 'Campaigns', used: CURRENT_USAGE.campaigns,     total: currentPlan.limits.campaigns === 999 ? '∞' : currentPlan.limits.campaigns },
+    { label: 'Leads this month', used: CURRENT_USAGE.leadsThisMonth, total: currentPlan.limits.leadsPerMonth },
+    { label: 'AI Replies',       used: CURRENT_USAGE.aiReplies,      total: currentPlan.limits.aiRepliesPerMonth },
+  ];
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white">Billing &amp; Plans</h1>
-        <p className="text-gray-400 text-sm mt-1">You are on the <span className="text-white font-medium">Growth</span> plan. Renews on Apr 15, 2026.</p>
+        <p className="text-gray-400 text-sm mt-1">
+          You are on the <span className="text-white font-medium">{currentPlan.label}</span> plan &middot;
+          <span className="text-gray-500 ml-1">₹{currentPlan.price}/month</span>
+        </p>
       </div>
 
+      {/* Plan cards */}
       <div className="grid md:grid-cols-3 gap-6">
         {plans.map(plan => {
-          const isActive = plan.key === current;
-          const isPopular = plan.popular;
+          const isActive = plan.key === CURRENT_PLAN;
+          const isPopular = 'popular' in plan && plan.popular;
           return (
             <div key={plan.key} className={`relative rounded-2xl border p-6 transition ${
-              isPopular ? 'bg-white border-white text-black' : 'bg-white/[0.02] border-white/10 hover:border-white/25'
+              isPopular ? 'bg-white border-white' : 'bg-white/[0.02] border-white/10 hover:border-white/25'
             }`}>
               {isPopular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white text-xs font-semibold px-3 py-1 rounded-full border border-white/20">Most popular</span>
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white text-xs font-semibold px-3 py-1 rounded-full border border-white/20 whitespace-nowrap">
+                  Most popular
+                </span>
               )}
               <h3 className={`text-lg font-bold mb-1 ${isPopular ? 'text-black' : 'text-white'}`}>{plan.label}</h3>
-              <p className={`text-xs mb-5 ${isPopular ? 'text-gray-500' : 'text-gray-500'}`}>{plan.desc}</p>
-              <div className="mb-6">
+              <div className="mb-5">
                 <span className={`text-4xl font-bold ${isPopular ? 'text-black' : 'text-white'}`}>₹{plan.price.toLocaleString('en-IN')}</span>
                 <span className="text-sm text-gray-500 ml-1">/month</span>
               </div>
@@ -75,11 +99,18 @@ export default function BillingPage() {
                   isPopular ? 'border-black/20 text-black/50' : 'border-white/10 text-gray-600'
                 }`}>Current plan</div>
               ) : (
-                <button onClick={() => handleCheckout(plan.key)} disabled={loading === plan.key}
-                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50 ${
+                <button
+                  onClick={() => handleCheckout(plan.key)}
+                  disabled={loading === plan.key}
+                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2 ${
                     isPopular ? 'bg-black text-white hover:bg-gray-900' : 'border border-white/20 text-white hover:bg-white/5'
                   }`}>
-                  {loading === plan.key ? 'Redirecting...' : `Switch to ${plan.label}`}
+                  {loading === plan.key ? 'Redirecting...' : (
+                    <>
+                      {plan.payuLink && <ExternalLink className="w-3.5 h-3.5" />}
+                      Subscribe – ₹{plan.price.toLocaleString('en-IN')}/mo
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -87,26 +118,39 @@ export default function BillingPage() {
         })}
       </div>
 
-      <div className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-3">
-        <h2 className="text-sm font-semibold text-white">Current usage</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: 'Campaigns', used: 2, total: 10 },
-            { label: 'Leads this month', used: 147, total: 500 },
-            { label: 'AI Replies', used: 28, total: 150 },
-            { label: 'Days remaining', used: 31, total: 31 },
-          ].map(({ label, used, total }) => (
-            <div key={label}>
-              <div className="flex justify-between text-xs mb-1.5">
-                <span className="text-gray-400">{label}</span>
-                <span className="text-gray-500">{used}/{total}</span>
+      {/* Usage */}
+      <div className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-4">
+        <h2 className="text-sm font-semibold text-white">Current usage — {currentPlan.label} plan</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {usageItems.map(({ label, used, total }) => {
+            const pct = typeof total === 'number' ? Math.min(100, Math.round((used / total) * 100)) : 0;
+            const isNearLimit = pct >= 80;
+            return (
+              <div key={label}>
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="text-gray-400">{label}</span>
+                  <span className={isNearLimit ? 'text-amber-400' : 'text-gray-500'}>
+                    {used} / {total}
+                    {isNearLimit && ' ⚠'}
+                  </span>
+                </div>
+                <div className="h-1.5 bg-white/5 rounded-full">
+                  <div
+                    className={`h-1.5 rounded-full transition-all ${
+                      pct >= 100 ? 'bg-red-500' : isNearLimit ? 'bg-amber-400' : 'bg-white'
+                    }`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-1.5 bg-white/5 rounded-full">
-                <div className="h-1.5 bg-white rounded-full" style={{ width: `${Math.min(100, (used / total) * 100)}%` }} />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+        {CURRENT_USAGE.leadsThisMonth >= currentPlan.limits.leadsPerMonth && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-xs text-red-400">
+            🚫 You've reached your lead limit for this month. Upgrade your plan or wait for reset on the 1st.
+          </div>
+        )}
       </div>
 
       <p className="text-center text-xs text-gray-700">Payments secured by PayU · GST applicable · Cancel anytime</p>
