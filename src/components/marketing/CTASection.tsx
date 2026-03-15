@@ -1,18 +1,18 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export function CTASection() {
   return (
-    <section className="py-20 px-5 bg-white border-t border-gray-100">
-      <div className="max-w-2xl mx-auto text-center bg-black rounded-3xl p-10 sm:p-12">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Ready to find your next customer on Reddit?</h2>
-        <p className="text-gray-400 mb-8 text-sm">Join founders already using LeadPulse to turn Reddit conversations into revenue. Starts at &#8377;499/month.</p>
-        <Link href="/sign-in" className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-black font-semibold px-7 py-3 rounded-xl transition-colors">
-          Start free today <ArrowRight className="w-4 h-4" />
+    <section className="py-20 px-5">
+      <div className="max-w-2xl mx-auto text-center bg-white/[0.03] border border-white/10 rounded-3xl p-12 space-y-5">
+        <Sparkles className="w-8 h-8 text-white mx-auto" />
+        <h2 className="text-3xl font-bold text-white">Your debt-free journey starts at ₹10</h2>
+        <p className="text-gray-400 text-sm">No subscription. No lock-in. Get your first AI financial plan for the cost of a chai.</p>
+        <Link href="/sign-up" className="inline-block bg-white text-black font-semibold px-8 py-3.5 rounded-2xl hover:bg-gray-100 transition text-sm">
+          Get Started Free →
         </Link>
+        <p className="text-gray-600 text-xs">Top up ₹99 · Get 10 credits · Each plan = ₹10</p>
       </div>
     </section>
   );
 }
-
-export default CTASection;
