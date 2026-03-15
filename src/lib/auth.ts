@@ -1,11 +1,13 @@
-// Dummy auth helpers — replace with real Clerk calls when re-enabling
+// Dummy auth — replace with real auth when needed
+export const DUMMY_USER_ID = 'dummy_user_001';
+
 export function getDummyUserId(): string {
-  return 'dummy_user_001';
+  return DUMMY_USER_ID;
 }
 
 export function getDummyUser() {
   return {
-    id: 'dummy_user_001',
+    id: DUMMY_USER_ID,
     email: 'admin@leadpulse.io',
     full_name: 'Admin User',
     plan: 'pro' as const,

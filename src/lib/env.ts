@@ -4,10 +4,6 @@ export const env = {
     anonKey: process.env.LP_SUPABASE_ANON_KEY!,
     serviceKey: process.env.LP_SUPABASE_SERVICE_ROLE_KEY!,
   },
-  clerk: {
-    secretKey: process.env.CLERK_SECRET_KEY!,
-    webhookSecret: process.env.CLERK_WEBHOOK_SECRET!,
-  },
   openai: {
     apiKey: process.env.OPENAI_API_KEY!,
   },

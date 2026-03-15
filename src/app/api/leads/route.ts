@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getDummyUserId } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
+  const userId = getDummyUserId();
   const supabase = createSupabaseServerClient();
-  const { data: user } = await supabase
-    .from('users').select('id').eq('clerk_id', userId).single();
+  const { data: user } = await supabase.from('users').select('id').eq('id', userId).single();
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const sp = req.nextUrl.searchParams;
@@ -17,10 +14,8 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit;
 
   let query = supabase
-    .from('leads')
-    .select('*', { count: 'exact' })
-    .eq('user_id', user.id)
-    .order('detected_at', { ascending: false })
+    .from('leads').select('*', { count: 'exact' })
+    .eq('user_id', user.id).order('detected_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (sp.get('intent'))      query = query.eq('intent_level', sp.get('intent'));
