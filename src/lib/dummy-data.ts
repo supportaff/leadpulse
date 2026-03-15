@@ -25,7 +25,7 @@ export const dummyLeads: Lead[] = [
     matched_keywords: ['lead generation', 'social media monitoring', 'B2B SaaS'],
     ai_summary: 'High-intent buyer searching for lead generation tooling for their SaaS.',
     ai_reply: null, reply_used: false, reply_used_at: null,
-    status: 'viewed', is_competitor: false, competitor_name: null,
+    status: 'reviewed', is_competitor: false, competitor_name: null,
     detected_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
     posted_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
   },
