@@ -13,6 +13,7 @@ export interface Lead {
   post_body: string;
   author_username: string | null;
   subreddit: string | null;
+  reddit_username: string | null;
   intent_score: number;
   intent_level: IntentLevel;
   matched_keywords: string[];
@@ -23,6 +24,7 @@ export interface Lead {
   status: LeadStatus;
   is_competitor: boolean;
   competitor_name: string | null;
+  is_unlocked: boolean;
   posted_at: string | null;
   detected_at: string;
 }
