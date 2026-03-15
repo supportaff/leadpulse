@@ -3,7 +3,7 @@ import crypto from 'crypto';
 // ─────────────────────────────────────────────────────────────────────────────
 // PAYU MODE SWITCH
 // Set NEXT_PUBLIC_PAYU_MODE=live in Vercel env to go live.
-// Defaults to 'test' so you never accidentally charge real money in dev.
+// Defaults to 'test' so you never accidentally charge real money.
 // ─────────────────────────────────────────────────────────────────────────────
 export const PAYU_MODE = (process.env.NEXT_PUBLIC_PAYU_MODE ?? 'test') as 'test' | 'live';
 export const IS_PAYU_LIVE = PAYU_MODE === 'live';
@@ -12,12 +12,7 @@ export const PAYU_BASE_URL = IS_PAYU_LIVE
   ? 'https://secure.payu.in/_payment'
   : 'https://test.payu.in/_payment';
 
-// Subscription portal base (PayU My Subscriptions)
-export const PAYU_SUB_BASE = IS_PAYU_LIVE
-  ? 'https://v.payu.in'
-  : 'https://test.payu.in';
-
-function getMerchantKey() {
+export function getMerchantKey() {
   const key = IS_PAYU_LIVE
     ? process.env.PAYU_MERCHANT_KEY_LIVE
     : process.env.PAYU_MERCHANT_KEY_TEST;
@@ -25,7 +20,7 @@ function getMerchantKey() {
   return key;
 }
 
-function getMerchantSalt() {
+export function getMerchantSalt() {
   const salt = IS_PAYU_LIVE
     ? process.env.PAYU_MERCHANT_SALT_LIVE
     : process.env.PAYU_MERCHANT_SALT_TEST;
@@ -33,7 +28,7 @@ function getMerchantSalt() {
   return salt;
 }
 
-interface PayUParams {
+export interface PayUParams {
   txnid: string;
   amount: string;
   productinfo: string;
@@ -49,20 +44,36 @@ export function generatePayUCheckout(params: PayUParams) {
   const key  = getMerchantKey();
   const salt = getMerchantSalt();
 
-  const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
+  // PayU hash format: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
+  const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}||||||||||| ${salt}`;
   const hash = crypto.createHash('sha512').update(hashString).digest('hex');
+
+  console.log('[PayU] mode:', PAYU_MODE, '| key:', key, '| txnid:', txnid, '| amount:', amount);
 
   return {
     mode: PAYU_MODE,
     action: PAYU_BASE_URL,
-    fields: { key, txnid, amount, productinfo, firstname, email, phone, surl, furl, hash, service_provider: 'payu_paisa' },
+    fields: {
+      key,
+      txnid,
+      amount,
+      productinfo,
+      firstname,
+      email,
+      phone,
+      surl,
+      furl,
+      hash,
+    },
   };
 }
 
 export function verifyPayUHash(params: Record<string, string>): boolean {
   const { key, txnid, amount, productinfo, firstname, email, status, hash } = params;
   const salt = getMerchantSalt();
+  // Reverse hash: salt|status|udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
   const reverseHash = `${salt}|${status}|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
   const computed = crypto.createHash('sha512').update(reverseHash).digest('hex');
+  console.log('[PayU Webhook] hash match:', computed === hash);
   return computed === hash;
 }
