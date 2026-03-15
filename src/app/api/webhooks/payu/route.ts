@@ -1,47 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { verifyPayUHash } from '@/lib/payu'
+import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { verifyPayUHash } from '@/lib/payu';
 
 export async function POST(req: NextRequest) {
-  const formData = await req.formData()
-  const params: Record<string, string> = {}
-  formData.forEach((value, key) => { params[key] = value.toString() })
+  const formData = await req.formData();
+  const params: Record<string, string> = {};
+  formData.forEach((value, key) => { params[key] = String(value); });
 
-  // Verify hash
+  const { status, txnid, hash } = params;
+
   if (!verifyPayUHash(params)) {
-    return NextResponse.json({ error: 'Invalid hash' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid hash' }, { status: 400 });
   }
 
-  const supabase = createSupabaseServerClient()
-  const { txnid, status } = params
+  const supabase = createSupabaseServerClient();
 
-  const { data: sub } = await supabase
-    .from('subscriptions')
-    .select('*, users(id)')
-    .eq('payu_txn_id', txnid)
-    .single()
+  if (status === 'success') {
+    const { data: sub } = await supabase
+      .from('subscriptions').select('user_id, plan')
+      .eq('payu_txn_id', txnid).single();
 
-  if (!sub) return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    if (sub) {
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-  const isSuccess = status === 'success'
-  const expiresAt = isSuccess
-    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    : null
+      await supabase.from('subscriptions').update({
+        status: 'success',
+        starts_at: new Date().toISOString(),
+        expires_at: expiresAt.toISOString(),
+      }).eq('payu_txn_id', txnid);
 
-  await supabase.from('subscriptions').update({
-    status: isSuccess ? 'success' : 'failed',
-    starts_at: isSuccess ? new Date().toISOString() : null,
-    expires_at: expiresAt,
-  }).eq('payu_txn_id', txnid)
-
-  if (isSuccess) {
-    await supabase.from('users').update({
-      plan: sub.plan,
-      plan_expires_at: expiresAt,
-    }).eq('id', (sub.users as { id: string }).id)
+      await supabase.from('users').update({
+        plan: sub.plan,
+        plan_expires_at: expiresAt.toISOString(),
+      }).eq('id', sub.user_id);
+    }
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/billing?status=success`);
   }
 
-  return NextResponse.redirect(
-    `${process.env.NEXT_PUBLIC_APP_URL}/billing?status=${isSuccess ? 'success' : 'failed'}`
-  )
+  await supabase.from('subscriptions').update({ status: 'failed' }).eq('payu_txn_id', txnid);
+  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/billing?status=failed`);
 }

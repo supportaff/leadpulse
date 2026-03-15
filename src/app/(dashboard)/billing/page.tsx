@@ -1,53 +1,94 @@
-'use client'
-import { useState } from 'react'
-import { Check } from 'lucide-react'
-
-const plans = [
-  { id: 'starter', name: 'Starter', price: 14, features: ['5 keywords', '100 leads/mo', '50 AI replies'] },
-  { id: 'growth',  name: 'Growth',  price: 22, features: ['15 keywords', '500 leads/mo', '250 AI replies'] },
-  { id: 'pro',     name: 'Pro',     price: 30, features: ['Unlimited keywords', 'Unlimited leads', 'Unlimited replies'] },
-]
+'use client';
+import { useState } from 'react';
+import { PLAN_PRICES, PLAN_LIMITS } from '@/types/subscription';
 
 export default function BillingPage() {
-  const [loading, setLoading] = useState<string | null>(null)
+  const [loading, setLoading] = useState<string | null>(null);
 
-  const checkout = async (planId: string) => {
-    setLoading(planId)
-    const res = await fetch('/api/billing/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: planId }),
-    })
-    const data = await res.json()
-    if (data.paymentUrl) window.location.href = data.paymentUrl
-    setLoading(null)
-  }
+  const checkout = async (plan: 'starter' | 'growth' | 'pro') => {
+    setLoading(plan);
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.paymentUrl) window.location.href = data.paymentUrl;
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const plans = Object.entries(PLAN_PRICES) as [keyof typeof PLAN_PRICES, { monthly: number; label: string }][];
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900">Billing & Plans</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
-        {plans.map(plan => (
-          <div key={plan.id} className="rounded-xl border-2 border-gray-100 bg-white p-6">
-            <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
-            <div className="my-3"><span className="text-4xl font-extrabold">${plan.price}</span><span className="text-gray-400 text-sm">/mo</span></div>
-            <ul className="space-y-2 mb-6">
-              {plan.features.map(f => (
-                <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                  <Check className="h-4 w-4 text-green-500" />{f}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => checkout(plan.id)}
-              disabled={loading === plan.id}
-              className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading === plan.id ? 'Redirecting...' : `Upgrade to ${plan.name}`}
-            </button>
-          </div>
-        ))}
+      <div>
+        <h1 className="text-2xl font-bold text-white">Billing &amp; Plans</h1>
+        <p className="text-gray-400 text-sm mt-1">Upgrade your plan to unlock more leads and AI replies</p>
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {plans.map(([planKey, planInfo]) => {
+          const limits = PLAN_LIMITS[planKey];
+          const isGrowth = planKey === 'growth';
+          return (
+            <div key={planKey} className={`rounded-2xl border p-6 space-y-5 relative ${
+              isGrowth ? 'border-purple-500 bg-purple-950/20' : 'border-gray-800 bg-gray-900'
+            }`}>
+              {isGrowth && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">MOST POPULAR</span>
+                </div>
+              )}
+              <div>
+                <h3 className="text-lg font-bold text-white">{planInfo.label}</h3>
+                <div className="flex items-baseline gap-1 mt-2">
+                  <span className="text-4xl font-extrabold text-white">${planInfo.monthly}</span>
+                  <span className="text-gray-400 text-sm">/month</span>
+                </div>
+              </div>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  {limits.keywords === Infinity ? 'Unlimited keywords' : `${limits.keywords} keywords`}
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  {limits.leads === Infinity ? 'Unlimited leads/mo' : `${limits.leads} leads/mo`}
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span>
+                  {limits.replies === Infinity ? 'Unlimited AI replies' : `${limits.replies} AI replies/mo`}
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-300">
+                  <span className="text-green-400">✓</span> Email alerts
+                </li>
+                {(planKey === 'growth' || planKey === 'pro') && (
+                  <li className="flex items-center gap-2 text-sm text-gray-300">
+                    <span className="text-green-400">✓</span> Competitor monitoring
+                  </li>
+                )}
+              </ul>
+              <button
+                onClick={() => checkout(planKey)}
+                disabled={loading === planKey}
+                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition ${
+                  isGrowth
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90'
+                    : 'bg-gray-800 border border-gray-700 text-white hover:bg-gray-700'
+                } disabled:opacity-50`}>
+                {loading === planKey ? 'Redirecting...' : `Get ${planInfo.label}`}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-center text-xs text-gray-500">
+        Payments are secured by PayU. Cancel anytime.
+      </p>
     </div>
-  )
+  );
 }

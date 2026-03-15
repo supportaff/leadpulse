@@ -1,96 +1,95 @@
-'use client'
-import { useEffect, useState } from 'react'
-import { Plus, Target, Trash2 } from 'lucide-react'
-import type { Campaign } from '@/types'
+'use client';
+import { useState } from 'react';
+import { useCampaigns } from '@/hooks/useCampaigns';
+import { CampaignForm } from '@/components/dashboard/CampaignForm';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { Campaign } from '@/types/campaign';
 
 export default function CampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [name, setName] = useState('')
-  const [keywords, setKeywords] = useState('')
-
-  const loadCampaigns = () => {
-    fetch('/api/campaigns').then(r => r.json()).then(d => {
-      setCampaigns(d.campaigns ?? [])
-      setLoading(false)
-    })
-  }
-
-  useEffect(() => { loadCampaigns() }, [])
-
-  const createCampaign = async () => {
-    if (!name || !keywords) return
-    await fetch('/api/campaigns', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        keywords: keywords.split(',').map(k => k.trim()).filter(Boolean),
-        platforms: ['reddit', 'twitter'],
-      }),
-    })
-    setName(''); setKeywords(''); setShowForm(false)
-    loadCampaigns()
-  }
-
-  const deleteCampaign = async (id: string) => {
-    await fetch(`/api/campaigns/${id}`, { method: 'DELETE' })
-    loadCampaigns()
-  }
+  const { campaigns, loading, createCampaign, deleteCampaign } = useCampaigns();
+  const [showForm, setShowForm] = useState(false);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-          <Plus className="h-4 w-4" /> New Campaign
+        <div>
+          <h1 className="text-2xl font-bold text-white">Campaigns</h1>
+          <p className="text-gray-400 text-sm mt-1">Manage your keyword monitoring campaigns</p>
+        </div>
+        <button onClick={() => setShowForm(true)}
+          className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition">
+          + New Campaign
         </button>
       </div>
 
       {showForm && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
-          <h3 className="font-semibold text-gray-800">Create Campaign</h3>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Campaign Name</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. CRM Keywords" className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Keywords (comma separated)</label>
-            <input value={keywords} onChange={e => setKeywords(e.target.value)} placeholder="CRM, project management, team collaboration" className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
-          </div>
-          <button onClick={createCampaign} className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700">Create</button>
-        </div>
+        <CampaignForm onSubmit={createCampaign} onClose={() => setShowForm(false)} />
       )}
 
-      {loading ? <div className="text-center py-12 text-gray-400">Loading...</div> : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {campaigns.length === 0 && <div className="col-span-2 text-center py-12 text-gray-400">No campaigns yet. Create your first one!</div>}
-          {campaigns.map(c => (
-            <div key={c.id} className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-blue-50 p-2"><Target className="h-5 w-5 text-blue-600" /></div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{c.name}</h3>
-                    <p className="text-xs text-gray-500">{c.platforms.join(', ')}</p>
-                  </div>
-                </div>
-                <button onClick={() => deleteCampaign(c.id)} className="text-gray-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {c.keywords.map(k => (
-                  <span key={k} className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">{k}</span>
-                ))}
-              </div>
-              <div className={`mt-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${c.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${c.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
-                {c.is_active ? 'Active' : 'Paused'}
-              </div>
-            </div>
+      {loading ? (
+        <div className="py-12"><LoadingSpinner /></div>
+      ) : campaigns.length === 0 ? (
+        <EmptyState
+          icon="🎯"
+          title="No campaigns yet"
+          description="Create your first campaign to start monitoring Reddit and X for buyer-intent posts."
+          action={
+            <button onClick={() => setShowForm(true)}
+              className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition">
+              Create Campaign
+            </button>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {campaigns.map(campaign => (
+            <CampaignCard key={campaign.id} campaign={campaign} onDelete={deleteCampaign} />
           ))}
         </div>
       )}
     </div>
-  )
+  );
+}
+
+function CampaignCard({ campaign, onDelete }: { campaign: Campaign; onDelete: (id: string) => void }) {
+  return (
+    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5 space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="font-semibold text-white">{campaign.name}</h3>
+          {campaign.description && <p className="text-gray-400 text-xs mt-0.5">{campaign.description}</p>}
+        </div>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          campaign.is_active ? 'bg-green-900/50 text-green-400 border border-green-700/50' : 'bg-gray-800 text-gray-500'
+        }`}>
+          {campaign.is_active ? '● Active' : 'Paused'}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {campaign.keywords.slice(0, 5).map(kw => (
+          <span key={kw} className="px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-xs text-gray-300">
+            {kw}
+          </span>
+        ))}
+        {campaign.keywords.length > 5 && (
+          <span className="px-2 py-0.5 bg-gray-800 border border-gray-700 rounded-full text-xs text-gray-500">
+            +{campaign.keywords.length - 5} more
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 text-xs text-gray-500">
+        {campaign.platforms.map(p => (
+          <span key={p}>{p === 'reddit' ? '🟠 Reddit' : '𝕏 Twitter'}</span>
+        ))}
+      </div>
+
+      <div className="flex gap-2 pt-2 border-t border-gray-800">
+        <button onClick={() => onDelete(campaign.id)}
+          className="text-xs text-red-400 hover:text-red-300 transition">Delete</button>
+      </div>
+    </div>
+  );
 }

@@ -1,37 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-
-interface ClerkUserEvent {
-  type: string
-  data: {
-    id: string
-    email_addresses: Array<{ email_address: string; id: string }>
-    first_name: string | null
-    last_name: string | null
-    image_url: string | null
-  }
-}
+import { NextRequest, NextResponse } from 'next/server';
+import { Webhook } from 'svix';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { env } from '@/lib/env';
 
 export async function POST(req: NextRequest) {
-  const event = await req.json() as ClerkUserEvent
-  const supabase = createSupabaseServerClient()
+  const payload = await req.text();
+  const headers = {
+    'svix-id': req.headers.get('svix-id') ?? '',
+    'svix-timestamp': req.headers.get('svix-timestamp') ?? '',
+    'svix-signature': req.headers.get('svix-signature') ?? '',
+  };
+
+  let event: { type: string; data: Record<string, unknown> };
+  try {
+    const wh = new Webhook(env.clerk.secretKey);
+    event = wh.verify(payload, headers) as { type: string; data: Record<string, unknown> };
+  } catch {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
+
+  const supabase = createSupabaseServerClient();
 
   if (event.type === 'user.created' || event.type === 'user.updated') {
-    const { id, email_addresses, first_name, last_name, image_url } = event.data
-    const email = email_addresses[0]?.email_address
-    const full_name = [first_name, last_name].filter(Boolean).join(' ') || null
+    const d = event.data as {
+      id: string;
+      email_addresses: { email_address: string }[];
+      first_name: string;
+      last_name: string;
+      image_url: string;
+    };
+    const email = d.email_addresses?.[0]?.email_address;
+    const full_name = [d.first_name, d.last_name].filter(Boolean).join(' ');
 
     await supabase.from('users').upsert({
-      clerk_id: id,
+      clerk_id: d.id,
       email,
       full_name,
-      avatar_url: image_url,
-    }, { onConflict: 'clerk_id' })
+      avatar_url: d.image_url,
+    }, { onConflict: 'clerk_id' });
   }
 
   if (event.type === 'user.deleted') {
-    await supabase.from('users').delete().eq('clerk_id', event.data.id)
+    const d = event.data as { id: string };
+    await supabase.from('users').delete().eq('clerk_id', d.id);
   }
 
-  return NextResponse.json({ received: true })
+  return NextResponse.json({ received: true });
 }

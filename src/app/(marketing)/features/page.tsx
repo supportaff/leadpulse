@@ -1,16 +1,23 @@
-import FeaturesSection from '@/components/marketing/FeaturesSection'
-import type { Metadata } from 'next'
+import { Navbar } from '@/components/marketing/Navbar';
+import { FeaturesSection } from '@/components/marketing/FeaturesSection';
+import { CTASection } from '@/components/marketing/CTASection';
+import { Footer } from '@/components/marketing/Footer';
 
-export const metadata: Metadata = { title: 'Features — LeadPulse' }
+export const metadata = { title: 'Features — LeadPulse' };
 
 export default function FeaturesPage() {
   return (
-    <div className="py-20">
-      <div className="text-center mb-4">
-        <h1 className="text-4xl font-bold text-gray-900">Everything You Need to Find Leads</h1>
-        <p className="mt-3 text-lg text-gray-500">Powerful tools designed for modern SaaS growth.</p>
+    <main className="min-h-screen bg-gray-950 text-white">
+      <Navbar />
+      <div className="pt-24 pb-12 text-center">
+        <h1 className="text-5xl font-extrabold text-white">Everything You Need to Convert Leads</h1>
+        <p className="text-gray-400 text-lg mt-4 max-w-xl mx-auto">
+          LeadPulse combines real-time social scanning, AI intent scoring, and automated reply generation — all in one platform.
+        </p>
       </div>
       <FeaturesSection />
-    </div>
-  )
+      <CTASection />
+      <Footer />
+    </main>
+  );
 }

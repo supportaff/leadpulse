@@ -1,49 +1,50 @@
-import CryptoJS from 'crypto-js'
-import { env } from '@/lib/env'
+import crypto from 'crypto';
+import { env } from '@/lib/env';
 
-interface PayUOrderParams {
-  txnid: string
-  amount: string
-  productinfo: string
-  firstname: string
-  email: string
-  phone?: string
-  surl: string
-  furl: string
+interface PayUParams {
+  txnid: string;
+  amount: string;
+  productinfo: string;
+  firstname: string;
+  email: string;
+  phone: string;
+  surl: string;
+  furl: string;
 }
 
-export function generatePayUHash(params: PayUOrderParams): string {
-  const hashString = [
-    env.payu.merchantKey,
-    params.txnid,
-    params.amount,
-    params.productinfo,
-    params.firstname,
-    params.email,
-    '', '', '', '', '', '', '', '', '', // udf1-udf10 (empty)
-    env.payu.merchantSalt,
-  ].join('|')
-
-  return CryptoJS.SHA512(hashString).toString()
+function sha512(input: string): string {
+  return crypto.createHash('sha512').update(input).digest('hex');
 }
 
-export function generateTxnId(): string {
-  return `LP_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+export function generatePayUCheckout(params: PayUParams) {
+  const { txnid, amount, productinfo, firstname, email, phone, surl, furl } = params;
+  const key = env.payu.merchantKey;
+  const salt = env.payu.merchantSalt;
+
+  // PayU hash: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
+  const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${salt}`;
+  const hash = sha512(hashString);
+
+  return {
+    key,
+    txnid,
+    amount,
+    productinfo,
+    firstname,
+    email,
+    phone,
+    surl,
+    furl,
+    hash,
+    paymentUrl: env.payu.baseUrl,
+  };
 }
 
 export function verifyPayUHash(params: Record<string, string>): boolean {
-  const hashString = [
-    env.payu.merchantSalt,
-    params.status,
-    '', '', '', '', '', '', '', '', '', // udf10-udf1 reversed (empty)
-    params.email,
-    params.firstname,
-    params.productinfo,
-    params.amount,
-    params.txnid,
-    env.payu.merchantKey,
-  ].join('|')
-
-  const computedHash = CryptoJS.SHA512(hashString).toString()
-  return computedHash === params.hash
+  const { key, txnid, amount, productinfo, firstname, email, status, hash } = params;
+  const salt = env.payu.merchantSalt;
+  // Reverse hash for verification: salt|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
+  const hashString = `${salt}|${status}|||||||||||${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+  const computed = sha512(hashString);
+  return computed === hash;
 }

@@ -1,48 +1,34 @@
-import { env } from '@/lib/env'
+import { env } from '@/lib/env';
 
 interface Tweet {
-  id: string
-  text: string
-  author_id: string
-  created_at: string
-  author?: {
-    username: string
-    name: string
-  }
+  id: string;
+  text: string;
+  author_id: string;
+  created_at: string;
 }
 
 class TwitterClient {
   async searchTweets(keywords: string[]): Promise<Tweet[]> {
-    const query = keywords.map((k) => `"${k}"`).join(' OR ')
-    // Exclude retweets and replies to get original posts only
-    const fullQuery = `(${query}) -is:retweet -is:reply lang:en`
+    const query = keywords.map(k => `"${k}"`).join(' OR ');
+    const fullQuery = `(${query}) lang:en -is:retweet -is:reply`;
 
-    const url = new URL('https://api.twitter.com/2/tweets/search/recent')
-    url.searchParams.set('query', fullQuery)
-    url.searchParams.set('max_results', '50')
-    url.searchParams.set('tweet.fields', 'created_at,author_id,text')
-    url.searchParams.set('expansions', 'author_id')
-    url.searchParams.set('user.fields', 'username,name')
+    const url = new URL('https://api.twitter.com/2/tweets/search/recent');
+    url.searchParams.set('query', fullQuery);
+    url.searchParams.set('max_results', '50');
+    url.searchParams.set('tweet.fields', 'created_at,author_id,text');
 
     const res = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${env.twitter.bearerToken}`,
-      },
-    })
+      headers: { Authorization: `Bearer ${env.twitter.bearerToken}` },
+    });
 
-    if (!res.ok) throw new Error(`Twitter search failed: ${res.status}`)
-    const data = await res.json()
-
-    const users: Record<string, { username: string; name: string }> = {}
-    for (const u of data.includes?.users ?? []) {
-      users[u.id] = { username: u.username, name: u.name }
+    if (!res.ok) {
+      console.error('Twitter API error:', await res.text());
+      return [];
     }
 
-    return (data.data ?? []).map((t: Tweet) => ({
-      ...t,
-      author: users[t.author_id],
-    }))
+    const data = await res.json();
+    return data.data ?? [];
   }
 }
 
-export const twitterClient = new TwitterClient()
+export const twitterClient = new TwitterClient();

@@ -1,32 +1,42 @@
-import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function GET() {
-  const { userId } = auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const supabase = createSupabaseServerClient()
-  const { data: user } = await supabase.from('users').select('id').eq('clerk_id', userId).single()
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  const supabase = createSupabaseServerClient();
+  const { data: user } = await supabase.from('users').select('id').eq('clerk_id', userId).single();
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-  const uid = user.id
+  const { data: leads } = await supabase
+    .from('leads').select('intent_level, platform, status, is_competitor, matched_keywords, detected_at')
+    .eq('user_id', user.id);
 
-  const [totalRes, highRes, repliedRes, redditRes, twitterRes, campaignsRes] = await Promise.all([
-    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('user_id', uid),
-    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('user_id', uid).eq('intent_level', 'high'),
-    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('user_id', uid).eq('reply_used', true),
-    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('user_id', uid).eq('platform', 'reddit'),
-    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('user_id', uid).eq('platform', 'twitter'),
-    supabase.from('campaigns').select('*', { count: 'exact', head: true }).eq('user_id', uid).eq('is_active', true),
-  ])
+  const all = leads ?? [];
+
+  // Flatten matched keywords and count
+  const keywordCounts: Record<string, number> = {};
+  for (const lead of all) {
+    for (const kw of lead.matched_keywords ?? []) {
+      keywordCounts[kw] = (keywordCounts[kw] ?? 0) + 1;
+    }
+  }
+  const topKeywords = Object.entries(keywordCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([keyword, count]) => ({ keyword, count }));
 
   return NextResponse.json({
-    total: totalRes.count ?? 0,
-    high: highRes.count ?? 0,
-    replied: repliedRes.count ?? 0,
-    reddit: redditRes.count ?? 0,
-    twitter: twitterRes.count ?? 0,
-    campaigns: campaignsRes.count ?? 0,
-  })
+    totalLeads: all.length,
+    highIntent: all.filter(l => l.intent_level === 'high').length,
+    mediumIntent: all.filter(l => l.intent_level === 'medium').length,
+    lowIntent: all.filter(l => l.intent_level === 'low').length,
+    replied: all.filter(l => l.status === 'replied').length,
+    redditLeads: all.filter(l => l.platform === 'reddit').length,
+    twitterLeads: all.filter(l => l.platform === 'twitter').length,
+    competitorMentions: all.filter(l => l.is_competitor).length,
+    topKeywords,
+  });
 }
