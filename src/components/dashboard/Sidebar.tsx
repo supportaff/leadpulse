@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Heart, Baby, BellRing, Wallet, Settings, X, LogOut, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Heart, Calendar, BellRing, Wallet, Settings, X, LogOut, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useState, useMemo } from 'react';
@@ -9,15 +9,13 @@ import { useState, useMemo } from 'react';
 const nav = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/period-tracker', label: 'Period Tracker', icon: Heart },
-  { href: '/pregnancy-planner', label: 'Pregnancy Planner', icon: Baby },
+  { href: '/period-history', label: 'Period History', icon: Calendar },
   { href: '/reminders', label: 'WhatsApp Reminders', icon: BellRing },
   { href: '/billing', label: 'Wallet & Billing', icon: Wallet },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
-function randomToken() {
-  return Math.random().toString(36).slice(2, 9).toUpperCase();
-}
+function randomToken() { return Math.random().toString(36).slice(2,9).toUpperCase(); }
 
 interface SidebarProps { open?: boolean; onClose?: () => void; }
 
@@ -53,27 +51,26 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   return (
     <>
-      {open && <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={onClose} />}
+      {open && <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={onClose}/>}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
           <div className="bg-[#0a0a0a] border border-red-500/20 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center"><Trash2 className="w-4 h-4 text-red-400" /></div>
+              <div className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center"><Trash2 className="w-4 h-4 text-red-400"/></div>
               <div><p className="text-white font-semibold text-sm">Delete account</p><p className="text-gray-500 text-xs">This is permanent.</p></div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-xl p-3">
               <p className="text-xs text-gray-400">Type this code to confirm:</p>
               <p className="text-xl font-mono font-bold text-red-400 tracking-widest select-all">{token}</p>
             </div>
-            <input type="text" value={inputVal} onChange={e => { setInputVal(e.target.value.toUpperCase()); setError(''); }}
-              placeholder="Enter code" autoFocus
-              className="w-full bg-white/5 border border-white/10 text-white text-sm font-mono rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-red-500/50 tracking-widest" />
+            <input type="text" value={inputVal} onChange={e=>{setInputVal(e.target.value.toUpperCase());setError('');}} placeholder="Enter code" autoFocus
+              className="w-full bg-white/5 border border-white/10 text-white text-sm font-mono rounded-xl px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-red-500/50 tracking-widest"/>
             {error && <p className="text-xs text-red-400">{error}</p>}
             <div className="flex gap-2">
               <button onClick={closeModal} className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white text-sm transition">Cancel</button>
-              <button onClick={handleDelete} disabled={deleting || inputVal.trim() !== token}
+              <button onClick={handleDelete} disabled={deleting||inputVal.trim()!==token}
                 className="flex-1 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-semibold transition disabled:opacity-40">
-                {deleting ? 'Deleting...' : 'Delete forever'}
+                {deleting?'Deleting...':'Delete forever'}
               </button>
             </div>
           </div>
@@ -82,36 +79,33 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <aside className={cn(
         'fixed inset-y-0 left-0 z-50 w-64 bg-black border-r border-white/8 flex flex-col py-6 transition-transform duration-200',
         'md:static md:translate-x-0 md:flex',
-        open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        open?'translate-x-0':'-translate-x-full md:translate-x-0'
       )}>
         <div className="px-5 mb-8 flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🌸</span>
-              <span className="text-xl font-bold text-white tracking-tight">MomCare</span>
-            </div>
-            <p className="text-xs text-gray-600 mt-0.5">Your pregnancy & period companion</p>
+            <div className="flex items-center gap-2"><span className="text-xl">🌸</span><span className="text-xl font-bold text-white tracking-tight">MomCare</span></div>
+            <p className="text-xs text-gray-600 mt-0.5">Period & pregnancy companion</p>
           </div>
-          {onClose && <button onClick={onClose} className="md:hidden text-gray-500 hover:text-white p-1"><X className="w-4 h-4" /></button>}
+          {onClose && <button onClick={onClose} className="md:hidden text-gray-500 hover:text-white p-1"><X className="w-4 h-4"/></button>}
         </div>
         <nav className="flex-1 space-y-0.5 px-3">
-          {nav.map(({ href, label, icon: Icon }) => (
+          {nav.map(({href,label,icon:Icon})=>(
             <Link key={href} href={href} onClick={onClose}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                pathname === href || pathname.startsWith(href + '/')
-                  ? 'bg-white text-black'
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+                pathname===href||pathname.startsWith(href+'/')
+                  ?'bg-white text-black'
+                  :'text-gray-500 hover:text-white hover:bg-white/5'
               )}>
-              <Icon className="w-4 h-4 shrink-0" />{label}
+              <Icon className="w-4 h-4 shrink-0"/>{label}
             </Link>
           ))}
         </nav>
         <div className="px-4 pt-4 border-t border-white/8 space-y-1">
-          <button onClick={() => openUserProfile()} className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition group text-left">
+          <button onClick={()=>openUserProfile()} className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/5 transition text-left">
             {user?.imageUrl
-              ? <img src={user.imageUrl} className="w-7 h-7 rounded-full object-cover" alt={name} />
-              : <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-xs font-bold text-black">{initial}</div>
+              ?<img src={user.imageUrl} className="w-7 h-7 rounded-full object-cover" alt={name}/>
+              :<div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-xs font-bold text-black">{initial}</div>
             }
             <div className="overflow-hidden flex-1">
               <p className="text-xs font-medium text-white truncate">{name}</p>
@@ -119,10 +113,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </div>
           </button>
           <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-gray-500 hover:text-white hover:bg-white/5 transition text-sm">
-            <LogOut className="w-4 h-4" /><span>Log out</span>
+            <LogOut className="w-4 h-4"/><span>Log out</span>
           </button>
           <button onClick={openModal} className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/5 transition text-sm">
-            <Trash2 className="w-4 h-4" /><span>Delete account</span>
+            <Trash2 className="w-4 h-4"/><span>Delete account</span>
           </button>
         </div>
       </aside>
