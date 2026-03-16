@@ -1,25 +1,23 @@
-import { TrendingDown, ShieldCheck, Wallet, Zap, BarChart2, Lock } from 'lucide-react';
-
 const features = [
-  { icon: TrendingDown, title: 'Debt Repayment Planner', desc: 'Enter all your loans. AI recommends avalanche or snowball method, calculates exact months to debt-free, and allocates your surplus optimally.', color: 'text-blue-400' },
-  { icon: ShieldCheck, title: 'Insurance Planner', desc: 'Answer 7 questions about your age, income, family, and health. AI recommends specific Indian insurers, cover amounts, and estimated annual premiums.', color: 'text-green-400' },
-  { icon: Wallet, title: 'Pay-as-you-use Wallet', desc: 'No monthly subscription. Top up with ₹99, ₹199, or ₹499. Spend ₹10 per AI plan. Your credits never expire.', color: 'text-yellow-400' },
-  { icon: Zap, title: 'Gemini AI Engine', desc: 'Powered by Google Gemini 1.5 Flash — fast, accurate, and trained on Indian financial regulations and insurance products.', color: 'text-purple-400' },
-  { icon: BarChart2, title: 'Multiple Loans Support', desc: 'Add home loan, car loan, personal loan, and credit card dues all at once. AI prioritises which to close first to save maximum interest.', color: 'text-orange-400' },
-  { icon: Lock, title: 'Private & Secure', desc: 'Your financial data is never stored or shared. Each request is processed in real-time and discarded after the response.', color: 'text-gray-400' },
+  { emoji: '🌸', title: 'Period Tracker', desc: 'Log your last period. AI predicts your next cycle, fertile window, ovulation date, and gives personalised wellness tips.', color: 'border-pink-500/20' },
+  { emoji: '🤰', title: 'Pregnancy Planner', desc: 'Enter LMP date. AI creates a 40-week plan with baby milestones, Indian doctor visit schedule, and diet tips.', color: 'border-purple-500/20' },
+  { emoji: '📱', title: 'WhatsApp Reminders', desc: 'Receive weekly pregnancy updates, period alerts, ovulation windows, and doctor reminders directly on WhatsApp.', color: 'border-green-500/20' },
+  { emoji: '💊', title: 'India-Specific Advice', desc: 'Supplement schedules, Indian foods (dal, spinach, milk), local hospital visit timelines — advice that fits your life.', color: 'border-orange-500/20' },
+  { emoji: '💳', title: 'Pay-as-you-use Wallet', desc: 'No monthly lock-in. Top up ₹99 for 10 AI plans. Credits never expire. WhatsApp reminders always free.', color: 'border-yellow-500/20' },
+  { emoji: '🔒', title: 'Private & Safe', desc: 'Your health data is never stored or shared. Processed in real-time and discarded. Your privacy matters.', color: 'border-white/10' },
 ];
 
 export function FeaturesSection() {
   return (
     <section id="features" className="py-20 px-5 max-w-5xl mx-auto">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-white">Everything you need to take control</h2>
-        <p className="text-gray-500 text-sm mt-2">Two powerful tools. One affordable wallet.</p>
+        <h2 className="text-3xl font-bold text-white">Everything for your health journey</h2>
+        <p className="text-gray-500 text-sm mt-2">Period tracking, pregnancy planning, and WhatsApp reminders — all in one place.</p>
       </div>
       <div className="grid md:grid-cols-3 gap-5">
-        {features.map(({ icon: Icon, title, desc, color }) => (
-          <div key={title} className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-3 hover:border-white/15 transition">
-            <Icon className={`w-5 h-5 ${color}`} />
+        {features.map(({ emoji, title, desc, color }) => (
+          <div key={title} className={`bg-white/[0.02] border ${color} rounded-2xl p-6 space-y-3 hover:border-white/20 transition`}>
+            <span className="text-2xl">{emoji}</span>
             <h3 className="text-white font-semibold text-sm">{title}</h3>
             <p className="text-gray-500 text-xs leading-relaxed">{desc}</p>
           </div>

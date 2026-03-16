@@ -1,20 +1,23 @@
 export function HowItWorks() {
   const steps = [
-    { num: '01', title: 'Top up your wallet', desc: 'Add credits starting at ₹99. Each AI-generated plan costs just ₹10 (1 credit).' },
-    { num: '02', title: 'Enter your financial data', desc: 'Tell us your monthly income, expenses, and all your loans — home, car, personal, credit card.' },
-    { num: '03', title: 'AI builds your plan', desc: 'Gemini AI analyses your data and gives a step-by-step debt repayment roadmap with exact rupee amounts.' },
-    { num: '04', title: 'Get insured right', desc: 'Answer 7 quick questions and AI recommends the exact term, health, and critical illness cover — with provider names and premiums.' },
+    { num: '01', emoji: '📝', title: 'Enter your dates', desc: 'Add your last period date or pregnancy LMP. Takes 30 seconds.' },
+    { num: '02', emoji: '🤖', title: 'AI builds your plan', desc: 'Gemini AI generates your personalised cycle insights or week-by-week pregnancy roadmap.' },
+    { num: '03', emoji: '📱', title: 'Get WhatsApp reminders', desc: 'Enter your number once. Get weekly tips, doctor alerts, and health guidance on WhatsApp.' },
+    { num: '04', emoji: '💕', title: 'Stay on track', desc: 'Never miss a doctor visit, ovulation window, or important milestone again.' },
   ];
   return (
     <section id="how" className="py-20 px-5 max-w-5xl mx-auto">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-white">How it works</h2>
-        <p className="text-gray-500 text-sm mt-2">From data to actionable plan in under 30 seconds</p>
+        <h2 className="text-3xl font-bold text-white">How MomCare works</h2>
+        <p className="text-gray-500 text-sm mt-2">From signup to your first WhatsApp reminder in under 2 minutes</p>
       </div>
       <div className="grid md:grid-cols-4 gap-6">
-        {steps.map(({ num, title, desc }) => (
+        {steps.map(({ num, emoji, title, desc }) => (
           <div key={num} className="bg-white/[0.02] border border-white/8 rounded-2xl p-6 space-y-3">
-            <span className="text-4xl font-bold text-white/10">{num}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-3xl font-bold text-white/10">{num}</span>
+              <span className="text-2xl">{emoji}</span>
+            </div>
             <h3 className="text-white font-semibold text-sm">{title}</h3>
             <p className="text-gray-500 text-xs leading-relaxed">{desc}</p>
           </div>

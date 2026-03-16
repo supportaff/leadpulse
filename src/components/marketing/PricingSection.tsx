@@ -7,26 +7,49 @@ const plans = [
     price: '₹99',
     credits: '10 credits',
     per: '₹10 per AI plan',
-    features: ['10 AI-generated plans', 'Debt repayment planner', 'Insurance recommender', 'Credits never expire'],
-    cta: 'Buy Starter',
+    badge: '',
+    features: [
+      '10 AI plans (period or pregnancy)',
+      'WhatsApp reminders — free forever',
+      'Period cycle predictions',
+      'Credits never expire',
+    ],
+    cta: 'Get Starter',
     highlight: false,
   },
   {
-    name: 'Popular',
+    name: 'Mom Plan',
     price: '₹249',
     credits: '30 credits',
     per: '₹8.3 per AI plan',
-    features: ['30 AI-generated plans', 'Debt repayment planner', 'Insurance recommender', 'Credits never expire', 'Save 17% vs Starter'],
-    cta: 'Buy Popular',
+    badge: '⭐ Most Popular',
+    features: [
+      '30 AI plans (period or pregnancy)',
+      'WhatsApp reminders — free forever',
+      'Full 40-week pregnancy roadmap',
+      'Doctor visit schedule',
+      'Credits never expire',
+      'Save 17% vs Starter',
+    ],
+    cta: 'Get Mom Plan',
     highlight: true,
   },
   {
-    name: 'Power',
+    name: 'Family',
     price: '₹499',
     credits: '70 credits',
     per: '₹7.1 per AI plan',
-    features: ['70 AI-generated plans', 'Debt repayment planner', 'Insurance recommender', 'Credits never expire', 'Save 29% vs Starter', 'Priority support'],
-    cta: 'Buy Power',
+    badge: '',
+    features: [
+      '70 AI plans (period or pregnancy)',
+      'WhatsApp reminders — free forever',
+      'Full 40-week pregnancy roadmap',
+      'Doctor visit schedule',
+      'Shareable with partner',
+      'Credits never expire',
+      'Save 29% vs Starter',
+    ],
+    cta: 'Get Family Plan',
     highlight: false,
   },
 ];
@@ -35,14 +58,17 @@ export function PricingSection() {
   return (
     <section id="pricing" className="py-20 px-5 max-w-5xl mx-auto">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-white">Simple wallet pricing</h2>
-        <p className="text-gray-500 text-sm mt-2">No subscriptions. No monthly fees. Pay only for what you use.</p>
+        <h2 className="text-3xl font-bold text-white">Simple, honest pricing</h2>
+        <p className="text-gray-500 text-sm mt-2">No subscription. No lock-in. WhatsApp reminders are always free.</p>
       </div>
       <div className="grid md:grid-cols-3 gap-6">
-        {plans.map(({ name, price, credits, per, features, cta, highlight }) => (
-          <div key={name} className={`rounded-2xl p-6 space-y-5 border ${
+        {plans.map(({ name, price, credits, per, badge, features, cta, highlight }) => (
+          <div key={name} className={`rounded-2xl p-6 space-y-5 border relative ${
             highlight ? 'bg-white text-black border-transparent' : 'bg-white/[0.02] border-white/8 text-white'
           }`}>
+            {badge && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black border border-white/20 text-white text-xs px-3 py-1 rounded-full whitespace-nowrap">{badge}</div>
+            )}
             <div>
               <p className={`text-xs font-semibold uppercase tracking-wide ${highlight ? 'text-gray-500' : 'text-gray-500'}`}>{name}</p>
               <p className={`text-4xl font-bold mt-1 ${highlight ? 'text-black' : 'text-white'}`}>{price}</p>
@@ -50,8 +76,8 @@ export function PricingSection() {
             </div>
             <ul className="space-y-2">
               {features.map(f => (
-                <li key={f} className={`flex items-center gap-2 text-xs ${highlight ? 'text-gray-700' : 'text-gray-400'}`}>
-                  <Check className="w-3.5 h-3.5 shrink-0" />{f}
+                <li key={f} className={`flex items-start gap-2 text-xs ${highlight ? 'text-gray-700' : 'text-gray-400'}`}>
+                  <Check className="w-3.5 h-3.5 shrink-0 mt-0.5" />{f}
                 </li>
               ))}
             </ul>
